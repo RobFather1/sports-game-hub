@@ -1,23 +1,610 @@
-import logo from './logo.svg';
+/**
+ * App.js - Main Application Component
+ *
+ * PURPOSE: This is the main container for the Sports Game Hub.
+ * It manages all the state (data) and passes it down to child components.
+ *
+ * STATE:
+ * - selectedGame: Which game the user is currently viewing
+ * - messages: Array of all chat messages
+ * - currentMessage: What the user is currently typing
+ * - polls: Array of all polls (active and closed)
+ * - userVotes: Object tracking user's votes { pollId: optionId }
+ * - showCreatePoll: Boolean - whether create poll modal is open
+ * - reactionCounts: Object with emoji counts from last 30 seconds
+ * - gameScore: Current game score data
+ * - showScoreControls: Boolean - whether score controls are visible
+ *
+ * LAYOUT:
+ * - Top bar: Shows app title and selected game name
+ * - Score tracker: Shows current game score
+ * - Left sidebar: Game selector (200px wide)
+ * - Center: Chat display area with reactions
+ * - Right sidebar: Polls (250px wide)
+ * - Bottom: Message input and reaction bar
+ */
+
+import { useState, useEffect } from 'react';
 import './App.css';
 
+// Import our custom components
+import GameSelector from './components/GameSelector';
+import ChatDisplay from './components/ChatDisplay';
+import MessageInput from './components/MessageInput';
+import PollSidebar from './components/PollSidebar';
+import CreatePoll from './components/CreatePoll';
+import ReactionBar from './components/ReactionBar';
+import ScoreTracker from './components/ScoreTracker';
+import ScoreControls from './components/ScoreControls';
+
+// ============================================
+// HARDCODED DATA (will be replaced with real data later)
+// ============================================
+
+// Current username (in real app, this would come from auth)
+const CURRENT_USER = 'You';
+
+// List of available games with their sports and team info
+const GAMES = [
+  {
+    id: 1,
+    name: 'Bears vs Packers',
+    sport: 'football',
+    homeTeam: { name: 'Bears', logo: '🐻', score: 0 },
+    awayTeam: { name: 'Packers', logo: '🧀', score: 0 },
+  },
+  {
+    id: 2,
+    name: 'White Sox vs Cubs',
+    sport: 'baseball',
+    homeTeam: { name: 'White Sox', logo: '🧦', score: 0 },
+    awayTeam: { name: 'Cubs', logo: '🐻', score: 0 },
+  },
+  {
+    id: 3,
+    name: 'Bulls vs Lakers',
+    sport: 'basketball',
+    homeTeam: { name: 'Bulls', logo: '🐂', score: 0 },
+    awayTeam: { name: 'Lakers', logo: '💜', score: 0 },
+  },
+];
+
+// Sample chat messages to start with (mock data)
+const INITIAL_MESSAGES = [
+  {
+    id: 1,
+    username: 'BearsFan85',
+    text: 'Da Bears are looking good today!',
+    timestamp: '2:30 PM',
+    type: 'message', // 'message', 'reaction', or 'system'
+  },
+  {
+    id: 2,
+    username: 'ChicagoNative',
+    text: 'That last play was incredible!',
+    timestamp: '2:32 PM',
+    type: 'message',
+  },
+  {
+    id: 3,
+    username: 'GridironGuru',
+    text: 'Defense is playing solid. Keep it up!',
+    timestamp: '2:35 PM',
+    type: 'message',
+  },
+  {
+    id: 4,
+    username: 'WindyCityFan',
+    text: 'Anyone else at the stadium right now?',
+    timestamp: '2:38 PM',
+    type: 'message',
+  },
+  {
+    id: 5,
+    username: 'SportsJunkie22',
+    text: 'Watching from home but the energy is amazing!',
+    timestamp: '2:40 PM',
+    type: 'message',
+  },
+];
+
+// Sample polls to start with
+const INITIAL_POLLS = [
+  {
+    id: 'poll-1',
+    question: 'Will Bears score on this drive?',
+    options: [
+      { id: 1, text: 'Yes - Touchdown!', votes: 8 },
+      { id: 2, text: 'Yes - Field Goal', votes: 5 },
+      { id: 3, text: 'No - Turnover', votes: 2 },
+    ],
+    totalVotes: 15,
+    createdBy: 'BearsFan85',
+    createdAt: '2:25 PM',
+    status: 'active',
+  },
+];
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Gets the current time formatted as a readable timestamp
+ */
+const getCurrentTimestamp = () => {
+  return new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+/**
+ * Gets default period for a sport
+ */
+const getDefaultPeriod = (sport) => {
+  switch (sport) {
+    case 'football':
+    case 'basketball':
+      return 'Q1';
+    case 'baseball':
+      return 'Top 1';
+    default:
+      return 'Q1';
+  }
+};
+
+// ============================================
+// MAIN APP COMPONENT
+// ============================================
+
 function App() {
+  // ----------------------------------------
+  // STATE DECLARATIONS
+  // ----------------------------------------
+
+  // Which game is currently selected (default to first game)
+  const [selectedGame, setSelectedGame] = useState(GAMES[0]);
+
+  // All the chat messages (start with our mock data)
+  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+
+  // What the user is currently typing in the input
+  const [currentMessage, setCurrentMessage] = useState('');
+
+  // Polls state
+  const [polls, setPolls] = useState(INITIAL_POLLS);
+  const [userVotes, setUserVotes] = useState({}); // { pollId: optionId }
+  const [showCreatePoll, setShowCreatePoll] = useState(false);
+
+  // Reactions state
+  const [reactionCounts, setReactionCounts] = useState({
+    '🔥': 0,
+    '👍': 0,
+    '😮': 0,
+    '💪': 0,
+    '😂': 0,
+  });
+  const [reactionTimestamps, setReactionTimestamps] = useState([]); // For 30-second window
+
+  // Score state
+  const [gameScore, setGameScore] = useState({
+    gameId: selectedGame.id,
+    homeTeam: { ...selectedGame.homeTeam },
+    awayTeam: { ...selectedGame.awayTeam },
+    period: getDefaultPeriod(selectedGame.sport),
+    possession: selectedGame.sport === 'football' ? selectedGame.homeTeam.name : null,
+    sport: selectedGame.sport,
+  });
+  const [showScoreControls, setShowScoreControls] = useState(false);
+
+  // ----------------------------------------
+  // EFFECTS (side effects like timers)
+  // ----------------------------------------
+
+  // Effect to update reaction counts every second (for 30-second window)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const thirtySecondsAgo = Date.now() - 30000;
+
+      // Filter out old reactions
+      setReactionTimestamps(prev => {
+        const recent = prev.filter(r => r.timestamp > thirtySecondsAgo);
+
+        // Recalculate counts
+        const newCounts = {
+          '🔥': 0,
+          '👍': 0,
+          '😮': 0,
+          '💪': 0,
+          '😂': 0,
+        };
+        recent.forEach(r => {
+          if (newCounts[r.emoji] !== undefined) {
+            newCounts[r.emoji]++;
+          }
+        });
+        setReactionCounts(newCounts);
+
+        return recent;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Effect to auto-hide score controls after 10 seconds of inactivity
+  useEffect(() => {
+    if (showScoreControls) {
+      const timer = setTimeout(() => {
+        console.log('Auto-hiding score controls after 10 seconds');
+        setShowScoreControls(false);
+      }, 10000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showScoreControls, gameScore]); // Reset timer when score changes
+
+  // Effect to update game score when selected game changes
+  useEffect(() => {
+    console.log('Game changed, updating score for:', selectedGame.name);
+    setGameScore({
+      gameId: selectedGame.id,
+      homeTeam: { ...selectedGame.homeTeam },
+      awayTeam: { ...selectedGame.awayTeam },
+      period: getDefaultPeriod(selectedGame.sport),
+      possession: selectedGame.sport === 'football' ? selectedGame.homeTeam.name : null,
+      sport: selectedGame.sport,
+    });
+    setShowScoreControls(false);
+  }, [selectedGame]);
+
+  // ----------------------------------------
+  // EVENT HANDLERS - Game Selection
+  // ----------------------------------------
+
+  const handleSelectGame = (game) => {
+    console.log('Switching to game:', game.name);
+    setSelectedGame(game);
+  };
+
+  // ----------------------------------------
+  // EVENT HANDLERS - Chat Messages
+  // ----------------------------------------
+
+  const handleMessageChange = (text) => {
+    setCurrentMessage(text);
+  };
+
+  const handleSendMessage = () => {
+    if (currentMessage.trim() === '') {
+      return;
+    }
+
+    const newMessage = {
+      id: Date.now(),
+      username: CURRENT_USER,
+      text: currentMessage,
+      timestamp: getCurrentTimestamp(),
+      type: 'message',
+    };
+
+    console.log('New message created:', newMessage);
+    setMessages([...messages, newMessage]);
+    setCurrentMessage('');
+  };
+
+  /**
+   * Adds a system message to the chat (for score updates, poll results, etc.)
+   */
+  const addSystemMessage = (text) => {
+    const systemMessage = {
+      id: Date.now(),
+      username: 'System',
+      text: text,
+      timestamp: getCurrentTimestamp(),
+      type: 'system',
+    };
+    console.log('System message:', text);
+    setMessages(prev => [...prev, systemMessage]);
+  };
+
+  // ----------------------------------------
+  // EVENT HANDLERS - Polls
+  // ----------------------------------------
+
+  /**
+   * Opens the create poll modal
+   */
+  const handleOpenCreatePoll = () => {
+    console.log('Opening create poll modal');
+    setShowCreatePoll(true);
+  };
+
+  /**
+   * Closes the create poll modal
+   */
+  const handleCloseCreatePoll = () => {
+    console.log('Closing create poll modal');
+    setShowCreatePoll(false);
+  };
+
+  /**
+   * Creates a new poll
+   */
+  const handleCreatePoll = (question, optionTexts) => {
+    const newPoll = {
+      id: `poll-${Date.now()}`,
+      question: question,
+      options: optionTexts.map((text, index) => ({
+        id: index + 1,
+        text: text,
+        votes: 0,
+      })),
+      totalVotes: 0,
+      createdBy: CURRENT_USER,
+      createdAt: getCurrentTimestamp(),
+      status: 'active',
+    };
+
+    console.log('Creating new poll:', newPoll);
+    setPolls([newPoll, ...polls]); // Add to beginning
+    setShowCreatePoll(false);
+
+    // Announce in chat
+    addSystemMessage(`📊 New poll created: "${question}"`);
+  };
+
+  /**
+   * Handles voting on a poll
+   */
+  const handleVote = (pollId, optionId) => {
+    console.log('Voting on poll:', pollId, 'option:', optionId);
+
+    // Record the user's vote
+    setUserVotes(prev => ({
+      ...prev,
+      [pollId]: optionId,
+    }));
+
+    // Update the poll's vote counts
+    setPolls(prev =>
+      prev.map(poll => {
+        if (poll.id === pollId) {
+          return {
+            ...poll,
+            options: poll.options.map(opt =>
+              opt.id === optionId
+                ? { ...opt, votes: opt.votes + 1 }
+                : opt
+            ),
+            totalVotes: poll.totalVotes + 1,
+          };
+        }
+        return poll;
+      })
+    );
+  };
+
+  /**
+   * Closes a poll (only creator can do this)
+   */
+  const handleClosePoll = (pollId) => {
+    console.log('Closing poll:', pollId);
+
+    setPolls(prev =>
+      prev.map(poll => {
+        if (poll.id === pollId) {
+          // Find the winning option
+          let winner = poll.options[0];
+          poll.options.forEach(opt => {
+            if (opt.votes > winner.votes) {
+              winner = opt;
+            }
+          });
+
+          // Announce the result
+          addSystemMessage(
+            `📊 Poll closed! "${poll.question}" - Winner: ${winner.text} (${winner.votes} votes)`
+          );
+
+          return { ...poll, status: 'closed' };
+        }
+        return poll;
+      })
+    );
+  };
+
+  // ----------------------------------------
+  // EVENT HANDLERS - Reactions
+  // ----------------------------------------
+
+  /**
+   * Handles when user clicks a reaction emoji
+   */
+  const handleReaction = (emoji) => {
+    console.log('Reaction sent:', emoji);
+
+    // Add to timestamps for counting
+    setReactionTimestamps(prev => [
+      ...prev,
+      { emoji, timestamp: Date.now() },
+    ]);
+
+    // Immediately update count
+    setReactionCounts(prev => ({
+      ...prev,
+      [emoji]: prev[emoji] + 1,
+    }));
+
+    // Add reaction message to chat
+    const reactionMessage = {
+      id: Date.now(),
+      username: CURRENT_USER,
+      text: emoji,
+      timestamp: getCurrentTimestamp(),
+      type: 'reaction',
+    };
+    setMessages(prev => [...prev, reactionMessage]);
+  };
+
+  // ----------------------------------------
+  // EVENT HANDLERS - Score
+  // ----------------------------------------
+
+  /**
+   * Toggle score controls visibility
+   */
+  const handleToggleScoreControls = () => {
+    console.log('Toggling score controls');
+    setShowScoreControls(prev => !prev);
+  };
+
+  /**
+   * Update a team's score
+   */
+  const handleUpdateScore = (team, points) => {
+    console.log(`Updating ${team} score by ${points}`);
+
+    setGameScore(prev => {
+      const newScore = { ...prev };
+      if (team === 'home') {
+        newScore.homeTeam = {
+          ...prev.homeTeam,
+          score: Math.max(0, prev.homeTeam.score + points),
+        };
+      } else {
+        newScore.awayTeam = {
+          ...prev.awayTeam,
+          score: Math.max(0, prev.awayTeam.score + points),
+        };
+      }
+
+      // Announce score change in chat
+      addSystemMessage(
+        `⚡ Score Update: ${newScore.homeTeam.name} ${newScore.homeTeam.score} - ${newScore.awayTeam.score} ${newScore.awayTeam.name}`
+      );
+
+      return newScore;
+    });
+  };
+
+  /**
+   * Set the current period
+   */
+  const handleSetPeriod = (period) => {
+    console.log('Setting period to:', period);
+    setGameScore(prev => ({ ...prev, period }));
+  };
+
+  /**
+   * Toggle possession between teams
+   */
+  const handleTogglePossession = () => {
+    setGameScore(prev => ({
+      ...prev,
+      possession:
+        prev.possession === prev.homeTeam.name
+          ? prev.awayTeam.name
+          : prev.homeTeam.name,
+    }));
+  };
+
+  /**
+   * Reset the score to 0-0
+   */
+  const handleResetScore = () => {
+    console.log('Resetting score');
+    setGameScore(prev => ({
+      ...prev,
+      homeTeam: { ...prev.homeTeam, score: 0 },
+      awayTeam: { ...prev.awayTeam, score: 0 },
+      period: getDefaultPeriod(prev.sport),
+    }));
+    addSystemMessage('⚡ Score has been reset to 0-0');
+  };
+
+  // ----------------------------------------
+  // RENDER
+  // ----------------------------------------
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-        Sports Game Hub - Let's Build This! 🏈
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+    <div className="app">
+      {/* TOP BAR - Shows app title and selected game */}
+      <header className="top-bar">
+        <h1 className="app-title">Sports Game Hub</h1>
+        <div className="current-game">
+          <span className="current-game-label">Now Watching:</span>
+          <span className="current-game-name">{selectedGame.name}</span>
+        </div>
       </header>
+
+      {/* SCORE TRACKER - Shows current game score */}
+      <ScoreTracker
+        gameScore={gameScore}
+        onToggleControls={handleToggleScoreControls}
+        showControls={showScoreControls}
+      />
+
+      {/* SCORE CONTROLS - Collapsible panel for editing score */}
+      <ScoreControls
+        gameScore={gameScore}
+        isVisible={showScoreControls}
+        onUpdateScore={handleUpdateScore}
+        onSetPeriod={handleSetPeriod}
+        onTogglePossession={handleTogglePossession}
+        onResetScore={handleResetScore}
+      />
+
+      {/* MAIN CONTENT AREA */}
+      <div className="main-content">
+        {/* LEFT SIDEBAR - Game selector */}
+        <aside className="sidebar">
+          <GameSelector
+            games={GAMES}
+            selectedGame={selectedGame}
+            onSelectGame={handleSelectGame}
+          />
+        </aside>
+
+        {/* CENTER - Chat area */}
+        <main className="chat-area">
+          {/* Chat messages display */}
+          <ChatDisplay messages={messages} />
+
+          {/* Reaction bar */}
+          <ReactionBar
+            reactionCounts={reactionCounts}
+            onReaction={handleReaction}
+          />
+
+          {/* Message input at bottom */}
+          <MessageInput
+            currentMessage={currentMessage}
+            onMessageChange={handleMessageChange}
+            onSendMessage={handleSendMessage}
+          />
+        </main>
+
+        {/* RIGHT SIDEBAR - Polls */}
+        <aside className="sidebar-right">
+          <PollSidebar
+            polls={polls}
+            userVotes={userVotes}
+            currentUser={CURRENT_USER}
+            onCreatePoll={handleOpenCreatePoll}
+            onVote={handleVote}
+            onClosePoll={handleClosePoll}
+          />
+        </aside>
+      </div>
+
+      {/* CREATE POLL MODAL */}
+      <CreatePoll
+        isOpen={showCreatePoll}
+        onClose={handleCloseCreatePoll}
+        onSubmit={handleCreatePoll}
+      />
     </div>
   );
 }
