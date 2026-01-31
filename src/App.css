@@ -105,6 +105,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   overflow-x: hidden;
+  /* Mobile-friendly touch handling */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Prevent pull-to-refresh on mobile */
+html, body {
+  overscroll-behavior: none;
 }
 
 /* ============================================
@@ -152,9 +160,11 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   background: linear-gradient(180deg, var(--stadium-dark) 0%, var(--stadium-black) 100%);
   position: relative;
   animation: appReveal 1s var(--ease-out-expo);
+  overflow: hidden;
 }
 
 @keyframes appReveal {
@@ -1683,9 +1693,73 @@ body {
 }
 
 /* ============================================
-   RESPONSIVE BREAKPOINTS
+   MOBILE MENU BUTTON & HAMBURGER
    ============================================ */
 
+.mobile-menu-button {
+  display: none; /* Hidden on desktop */
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.mobile-menu-button:hover,
+.mobile-menu-button.active {
+  background: var(--white-10);
+}
+
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+}
+
+.hamburger-icon span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--white);
+  border-radius: 2px;
+  transition: var(--transition-fast);
+}
+
+.mobile-menu-button.active .hamburger-icon span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-button.active .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-button.active .hamburger-icon span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* ============================================
+   MOBILE BACKDROP OVERLAY
+   ============================================ */
+
+.mobile-backdrop {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  animation: fadeIn 0.2s var(--ease-out-expo);
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS - MOBILE FIRST
+   ============================================ */
+
+/* Tablet breakpoint */
 @media (max-width: 1024px) {
   .sidebar {
     width: 200px;
@@ -1694,39 +1768,190 @@ body {
   .sidebar-right {
     width: 280px;
   }
+}
 
-  .score {
-    font-size: 44px;
+/* Mobile breakpoint - Major layout changes */
+@media (max-width: 768px) {
+  /* Show mobile menu button */
+  .mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Show backdrop when sidebars open */
+  .mobile-backdrop {
+    display: block;
+  }
+
+  /* TOP BAR - Compact horizontal layout */
+  .top-bar {
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .app-title {
+    font-size: 16px;
+    flex: 1;
+    text-align: center;
+  }
+
+  .top-bar-right {
+    gap: var(--space-xs);
+  }
+
+  .current-game {
+    display: none; /* Hide on mobile, shown in game selector */
+  }
+
+  .polls-toggle-button {
+    padding: var(--space-sm);
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .polls-toggle-text {
+    display: none; /* Icon only on mobile */
+  }
+
+  .polls-toggle-icon {
+    font-size: 20px;
+  }
+
+  /* SCORE TRACKER - Simplified for mobile */
+  .score-tracker {
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .score-display {
+    gap: var(--space-xs);
+  }
+
+  .team-score {
+    padding: var(--space-xs);
+    gap: var(--space-xs);
+  }
+
+  .team-logo {
+    font-size: 20px;
   }
 
   .team-name {
-    font-size: 18px;
+    font-size: 12px;
+    display: none; /* Hide team names on small screens */
   }
-}
 
-@media (max-width: 900px) {
+  .score {
+    font-size: 24px;
+    min-width: 30px;
+  }
+
+  .score-center {
+    gap: 0;
+  }
+
+  .versus {
+    font-size: 12px;
+  }
+
+  .period {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .possession-indicator {
+    display: none; /* Hide on mobile */
+  }
+
+  .edit-score-button {
+    position: static;
+    padding: var(--space-xs);
+    font-size: 10px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* SCORE CONTROLS - Stack vertically */
+  .score-controls {
+    padding: var(--space-sm);
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .score-controls-teams {
+    flex-direction: row;
+    gap: var(--space-sm);
+    width: 100%;
+  }
+
+  .team-controls {
+    flex: 1;
+  }
+
+  .score-buttons {
+    gap: 4px;
+  }
+
+  .score-button {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  /* MAIN CONTENT - Full width chat */
   .main-content {
     flex-direction: column;
   }
 
+  /* LEFT SIDEBAR - Slide-in panel on mobile */
   .sidebar {
-    width: 100%;
-    border: none;
-    border-bottom: 1px solid var(--white-05);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s var(--ease-out-expo);
+    border-right: 1px solid var(--white-10);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
   }
 
   .sidebar::after {
     display: none;
   }
 
-  /* On mobile, sidebar-right overlays as a slide-in panel */
+  .sidebar.mobile-visible {
+    transform: translateX(0);
+  }
+
+  .game-selector {
+    padding: var(--space-md);
+    padding-top: calc(var(--space-md) + 60px); /* Account for top bar */
+  }
+
+  .game-list {
+    flex-direction: column;
+  }
+
+  .game-button {
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  /* RIGHT SIDEBAR - Slide-in from right */
   .sidebar-right {
     position: fixed;
     top: 0;
     right: 0;
     bottom: 0;
     width: 300px;
-    max-width: 85vw;
+    max-width: 90vw;
     z-index: 1000;
     border-left: 1px solid var(--white-10);
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
@@ -1744,111 +1969,227 @@ body {
     transform: translateX(0);
   }
 
-  .game-list {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .poll-sidebar {
+    padding: var(--space-md);
+    padding-top: calc(var(--space-md) + 60px); /* Account for top bar */
   }
 
-  .game-list li {
-    flex: 1;
-    min-width: 150px;
-  }
-
+  /* CHAT AREA - Full width, maximize space */
   .chat-area {
-    min-height: 400px;
+    flex: 1;
+    min-height: 0; /* Allow shrinking */
   }
-}
 
-@media (max-width: 600px) {
-  .top-bar {
-    flex-direction: column;
-    gap: var(--space-sm);
+  .chat-display {
     padding: var(--space-md);
   }
 
-  .top-bar-right {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-sm);
+  .message {
+    padding: var(--space-sm);
   }
 
-  .app-title {
-    font-size: 22px;
+  .message-text {
+    font-size: 15px;
   }
 
-  .score-tracker {
-    padding: var(--space-md);
-  }
-
-  .score-display {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  .team-score {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .score {
-    font-size: 40px;
-  }
-
-  .score-center {
-    order: -1;
-  }
-
-  .edit-score-button {
-    position: static;
-    margin-top: var(--space-sm);
-  }
-
-  .score-controls {
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  .score-controls-teams {
-    flex-direction: column;
-    gap: var(--space-md);
-    width: 100%;
-  }
-
+  /* REACTION BAR - Larger touch targets */
   .reaction-bar {
-    flex-direction: row;
-    flex-wrap: wrap;
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .reaction-label {
+    display: none; /* Hide label on mobile */
+  }
+
+  .reaction-buttons {
+    gap: var(--space-sm);
+    flex-wrap: nowrap;
   }
 
   .reaction-button {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
   }
 
   .reaction-emoji {
-    font-size: 16px;
+    font-size: 22px;
   }
 
+  .reaction-count {
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+
+  /* MESSAGE INPUT - Touch friendly */
   .message-input {
-    flex-direction: column;
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .message-input-field {
+    padding: var(--space-md);
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 48px;
   }
 
   .send-button {
-    width: 100%;
+    min-width: 60px;
+    min-height: 48px;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 13px;
   }
 
+  /* MODAL - Full screen on mobile */
   .modal-content {
-    width: 95%;
-    padding: var(--space-md);
-    margin: var(--space-md);
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+    padding: var(--space-lg);
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-size: 24px;
+  }
+
+  .poll-question-input,
+  .poll-option-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 48px;
+  }
+
+  .remove-option-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .add-option-button {
+    min-height: 48px;
+    font-size: 15px;
   }
 
   .modal-buttons {
     flex-direction: column;
+    gap: var(--space-sm);
   }
 
   .modal-buttons button {
     width: 100%;
+    min-height: 52px;
+    font-size: 15px;
+  }
+
+  /* POLL CARDS - Touch friendly */
+  .poll-option {
+    min-height: 48px;
+    padding: var(--space-md);
+    font-size: 14px;
+  }
+
+  .create-poll-button {
+    min-height: 44px;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 12px;
+  }
+
+  .close-poll-button {
+    min-height: 48px;
+    font-size: 13px;
+  }
+}
+
+/* Small phone breakpoint */
+@media (max-width: 380px) {
+  .app-title {
+    font-size: 14px;
+  }
+
+  .score {
+    font-size: 22px;
+  }
+
+  .team-logo {
+    font-size: 18px;
+  }
+
+  .reaction-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .reaction-emoji {
+    font-size: 20px;
+  }
+
+  .send-button {
+    min-width: 50px;
+    font-size: 12px;
+  }
+}
+
+/* Landscape phone orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  .score-tracker {
+    padding: var(--space-xs) var(--space-md);
+  }
+
+  .score {
+    font-size: 20px;
+  }
+
+  .team-logo {
+    font-size: 16px;
+  }
+
+  .chat-display {
+    padding: var(--space-sm);
+  }
+
+  .message {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .reaction-bar {
+    padding: var(--space-xs) var(--space-md);
+  }
+
+  .reaction-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .message-input {
+    padding: var(--space-xs) var(--space-md);
+  }
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+  .top-bar {
+    padding-left: max(var(--space-md), env(safe-area-inset-left));
+    padding-right: max(var(--space-md), env(safe-area-inset-right));
+    padding-top: max(var(--space-sm), env(safe-area-inset-top));
+  }
+
+  .message-input {
+    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+    padding-left: max(var(--space-md), env(safe-area-inset-left));
+    padding-right: max(var(--space-md), env(safe-area-inset-right));
+  }
+
+  .sidebar {
+    padding-left: max(0px, env(safe-area-inset-left));
+  }
+
+  .sidebar-right {
+    padding-right: max(0px, env(safe-area-inset-right));
   }
 }
 

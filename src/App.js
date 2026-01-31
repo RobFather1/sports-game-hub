@@ -190,6 +190,9 @@ function App() {
   // Polls sidebar visibility
   const [showPollsSidebar, setShowPollsSidebar] = useState(false);
 
+  // Mobile game selector visibility
+  const [showMobileGameSelector, setShowMobileGameSelector] = useState(false);
+
   // Score state
   const [gameScore, setGameScore] = useState({
     gameId: selectedGame.id,
@@ -461,6 +464,26 @@ function App() {
   const handleTogglePollsSidebar = () => {
     console.log('Toggling polls sidebar');
     setShowPollsSidebar(prev => !prev);
+    // Close game selector when opening polls
+    setShowMobileGameSelector(false);
+  };
+
+  /**
+   * Toggle the mobile game selector visibility
+   */
+  const handleToggleMobileGameSelector = () => {
+    console.log('Toggling mobile game selector');
+    setShowMobileGameSelector(prev => !prev);
+    // Close polls when opening game selector
+    setShowPollsSidebar(false);
+  };
+
+  /**
+   * Close all mobile overlays
+   */
+  const handleCloseMobileOverlays = () => {
+    setShowMobileGameSelector(false);
+    setShowPollsSidebar(false);
   };
 
   // ----------------------------------------
@@ -547,10 +570,25 @@ function App() {
     <div className="app">
       {/* TOP BAR - Shows app title and selected game */}
       <header className="top-bar">
+        {/* Mobile menu button */}
+        <button
+          className={`mobile-menu-button ${showMobileGameSelector ? 'active' : ''}`}
+          onClick={handleToggleMobileGameSelector}
+          aria-expanded={showMobileGameSelector}
+          aria-label="Toggle games menu"
+        >
+          <span className="hamburger-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+
         <h1 className="app-title">Smack Talk Central</h1>
+
         <div className="top-bar-right">
           <div className="current-game">
-            <span className="current-game-label">Now Watching:</span>
+            <span className="current-game-label">Live:</span>
             <span className="current-game-name">{selectedGame.name}</span>
           </div>
           <button
@@ -561,7 +599,7 @@ function App() {
           >
             <span className="polls-toggle-icon">📊</span>
             <span className="polls-toggle-text">
-              {showPollsSidebar ? 'Hide Polls' : 'Create Poll'}
+              {showPollsSidebar ? 'Hide' : 'Polls'}
             </span>
           </button>
         </div>
@@ -584,14 +622,26 @@ function App() {
         onResetScore={handleResetScore}
       />
 
+      {/* MOBILE BACKDROP OVERLAY */}
+      {(showMobileGameSelector || showPollsSidebar) && (
+        <div
+          className="mobile-backdrop"
+          onClick={handleCloseMobileOverlays}
+          aria-hidden="true"
+        />
+      )}
+
       {/* MAIN CONTENT AREA */}
       <div className="main-content">
         {/* LEFT SIDEBAR - Game selector */}
-        <aside className="sidebar">
+        <aside className={`sidebar ${showMobileGameSelector ? 'mobile-visible' : ''}`}>
           <GameSelector
             games={GAMES}
             selectedGame={selectedGame}
-            onSelectGame={handleSelectGame}
+            onSelectGame={(game) => {
+              handleSelectGame(game);
+              setShowMobileGameSelector(false); // Close on selection
+            }}
           />
         </aside>
 
