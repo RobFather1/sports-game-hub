@@ -187,6 +187,9 @@ function App() {
   });
   const [reactionTimestamps, setReactionTimestamps] = useState([]); // For 30-second window
 
+  // Polls sidebar visibility
+  const [showPollsSidebar, setShowPollsSidebar] = useState(false);
+
   // Score state
   const [gameScore, setGameScore] = useState({
     gameId: selectedGame.id,
@@ -449,6 +452,18 @@ function App() {
   };
 
   // ----------------------------------------
+  // EVENT HANDLERS - Polls Sidebar
+  // ----------------------------------------
+
+  /**
+   * Toggle the polls sidebar visibility
+   */
+  const handleTogglePollsSidebar = () => {
+    console.log('Toggling polls sidebar');
+    setShowPollsSidebar(prev => !prev);
+  };
+
+  // ----------------------------------------
   // EVENT HANDLERS - Score
   // ----------------------------------------
 
@@ -532,10 +547,23 @@ function App() {
     <div className="app">
       {/* TOP BAR - Shows app title and selected game */}
       <header className="top-bar">
-        <h1 className="app-title">Sports Game Hub</h1>
-        <div className="current-game">
-          <span className="current-game-label">Now Watching:</span>
-          <span className="current-game-name">{selectedGame.name}</span>
+        <h1 className="app-title">Smack Talk Central</h1>
+        <div className="top-bar-right">
+          <div className="current-game">
+            <span className="current-game-label">Now Watching:</span>
+            <span className="current-game-name">{selectedGame.name}</span>
+          </div>
+          <button
+            className={`polls-toggle-button ${showPollsSidebar ? 'active' : ''}`}
+            onClick={handleTogglePollsSidebar}
+            aria-expanded={showPollsSidebar}
+            aria-label={showPollsSidebar ? 'Hide polls' : 'Show polls'}
+          >
+            <span className="polls-toggle-icon">📊</span>
+            <span className="polls-toggle-text">
+              {showPollsSidebar ? 'Hide Polls' : 'Create Poll'}
+            </span>
+          </button>
         </div>
       </header>
 
@@ -586,8 +614,8 @@ function App() {
           />
         </main>
 
-        {/* RIGHT SIDEBAR - Polls */}
-        <aside className="sidebar-right">
+        {/* RIGHT SIDEBAR - Polls (slides in/out) */}
+        <aside className={`sidebar-right ${showPollsSidebar ? 'visible' : 'hidden'}`}>
           <PollSidebar
             polls={polls}
             userVotes={userVotes}
