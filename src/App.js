@@ -24,8 +24,13 @@
  * - Bottom: Message input and reaction bar
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
+
+// AWS Amplify for real-time chat
+import { Amplify } from 'aws-amplify';
+import { events } from 'aws-amplify/data';
+import awsConfig, { CHAT_CHANNEL } from './aws-config';
 
 // Import our custom components
 import GameSelector from './components/GameSelector';
@@ -37,12 +42,34 @@ import ReactionBar from './components/ReactionBar';
 import ScoreTracker from './components/ScoreTracker';
 import ScoreControls from './components/ScoreControls';
 
+// Configure Amplify with AWS AppSync Events
+Amplify.configure(awsConfig);
+
 // ============================================
 // HARDCODED DATA (will be replaced with real data later)
 // ============================================
 
-// Current username (in real app, this would come from auth)
-const CURRENT_USER = 'You';
+// Generate a unique username for this session
+const generateUsername = () => {
+  const adjectives = ['Swift', 'Bold', 'Fierce', 'Lucky', 'Wild', 'Mighty', 'Quick', 'Brave'];
+  const nouns = ['Bear', 'Fan', 'Champ', 'Player', 'Star', 'Legend', 'Warrior', 'Hero'];
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const num = Math.floor(Math.random() * 100);
+  return `${adj}${noun}${num}`;
+};
+
+// Store username in sessionStorage so it persists across page refreshes but not sessions
+const getOrCreateUsername = () => {
+  let username = sessionStorage.getItem('chatUsername');
+  if (!username) {
+    username = generateUsername();
+    sessionStorage.setItem('chatUsername', username);
+  }
+  return username;
+};
+
+const CURRENT_USER = getOrCreateUsername();
 
 // List of available games with their sports and team info
 const GAMES = [
@@ -204,6 +231,12 @@ function App() {
   });
   const [showScoreControls, setShowScoreControls] = useState(false);
 
+  // Real-time chat connection state
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
+  const channelRef = useRef(null);
+  const processedMessageIds = useRef(new Set()); // Track processed message IDs to avoid duplicates
+
   // ----------------------------------------
   // EFFECTS (side effects like timers)
   // ----------------------------------------
@@ -265,6 +298,70 @@ function App() {
     setShowScoreControls(false);
   }, [selectedGame]);
 
+  // Effect to connect to AppSync Events for real-time chat
+  useEffect(() => {
+    let subscription = null;
+
+    const connectToChannel = async () => {
+      try {
+        console.log('Connecting to AppSync Events channel:', CHAT_CHANNEL);
+
+        // Connect to the channel
+        const channel = await events.connect(CHAT_CHANNEL);
+        channelRef.current = channel;
+        setIsConnected(true);
+        setConnectionError(null);
+        console.log('Successfully connected to channel');
+
+        // Subscribe to incoming messages
+        subscription = channel.subscribe({
+          next: (event) => {
+            console.log('Received event:', event);
+            const data = event.event;
+
+            // Skip if we've already processed this message (prevents duplicates)
+            if (data && data.id && !processedMessageIds.current.has(data.id)) {
+              processedMessageIds.current.add(data.id);
+
+              // Add the message to our local state
+              const newMessage = {
+                id: data.id,
+                username: data.username,
+                text: data.text,
+                timestamp: data.timestamp,
+                type: data.type || 'message',
+              };
+
+              setMessages(prev => [...prev, newMessage]);
+            }
+          },
+          error: (err) => {
+            console.error('Subscription error:', err);
+            setConnectionError('Connection error. Messages may not sync.');
+          },
+        });
+
+      } catch (error) {
+        console.error('Failed to connect to channel:', error);
+        setIsConnected(false);
+        setConnectionError('Failed to connect to chat. Messages will be local only.');
+      }
+    };
+
+    connectToChannel();
+
+    // Cleanup on unmount
+    return () => {
+      console.log('Cleaning up AppSync Events connection');
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+      if (channelRef.current) {
+        channelRef.current.close();
+      }
+    };
+  }, []);
+
   // ----------------------------------------
   // EVENT HANDLERS - Game Selection
   // ----------------------------------------
@@ -282,23 +379,40 @@ function App() {
     setCurrentMessage(text);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(async () => {
     if (currentMessage.trim() === '') {
       return;
     }
 
+    const messageId = Date.now();
     const newMessage = {
-      id: Date.now(),
+      id: messageId,
       username: CURRENT_USER,
       text: currentMessage,
       timestamp: getCurrentTimestamp(),
       type: 'message',
     };
 
-    console.log('New message created:', newMessage);
-    setMessages([...messages, newMessage]);
+    console.log('Sending message:', newMessage);
+
+    // Clear input immediately for better UX
     setCurrentMessage('');
-  };
+
+    // Mark this message ID as processed so we don't duplicate when it comes back
+    processedMessageIds.current.add(messageId);
+
+    // Add message locally immediately for instant feedback
+    setMessages(prev => [...prev, newMessage]);
+
+    // Publish to AppSync Events channel
+    try {
+      await events.post(CHAT_CHANNEL, newMessage);
+      console.log('Message published to channel');
+    } catch (error) {
+      console.error('Failed to publish message:', error);
+      // Message is already shown locally, so user still sees it
+    }
+  }, [currentMessage]);
 
   /**
    * Adds a system message to the chat (for score updates, poll results, etc.)
@@ -428,8 +542,10 @@ function App() {
   /**
    * Handles when user clicks a reaction emoji
    */
-  const handleReaction = (emoji) => {
+  const handleReaction = useCallback(async (emoji) => {
     console.log('Reaction sent:', emoji);
+
+    const messageId = Date.now();
 
     // Add to timestamps for counting
     setReactionTimestamps(prev => [
@@ -443,16 +559,26 @@ function App() {
       [emoji]: prev[emoji] + 1,
     }));
 
+    // Mark this message ID as processed
+    processedMessageIds.current.add(messageId);
+
     // Add reaction message to chat
     const reactionMessage = {
-      id: Date.now(),
+      id: messageId,
       username: CURRENT_USER,
       text: emoji,
       timestamp: getCurrentTimestamp(),
       type: 'reaction',
     };
     setMessages(prev => [...prev, reactionMessage]);
-  };
+
+    // Publish reaction to channel
+    try {
+      await events.post(CHAT_CHANNEL, reactionMessage);
+    } catch (error) {
+      console.error('Failed to publish reaction:', error);
+    }
+  }, []);
 
   // ----------------------------------------
   // EVENT HANDLERS - Polls Sidebar
@@ -647,6 +773,18 @@ function App() {
 
         {/* CENTER - Chat area */}
         <main className="chat-area">
+          {/* Connection status indicator */}
+          {connectionError && (
+            <div className="connection-error">
+              {connectionError}
+            </div>
+          )}
+          {isConnected && (
+            <div className="connection-status">
+              Live chat connected
+            </div>
+          )}
+
           {/* Chat messages display */}
           <ChatDisplay messages={messages} />
 
