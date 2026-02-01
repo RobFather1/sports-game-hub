@@ -8,10 +8,10 @@
 const awsConfig = {
   API: {
     Events: {
-      endpoint: 'https://ew3rrqxucrgvtd3sz4pvhlebxm.appsync-api.us-east-2.amazonaws.com/event',
-      region: 'us-east-2',
+      endpoint: process.env.REACT_APP_APPSYNC_ENDPOINT,
+      region: process.env.REACT_APP_APPSYNC_REGION || 'us-east-2',
       defaultAuthMode: 'apiKey',
-      apiKey: 'da2-atop5ry5jvhxvbm7xczmvjjnsi',
+      apiKey: process.env.REACT_APP_APPSYNC_API_KEY,
     },
   },
 };
