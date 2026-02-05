@@ -26,6 +26,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
+import { SignIn, SignUp, UserButton, useUser } from '@clerk/clerk-react';
 
 // AWS Amplify for real-time chat
 import { Amplify } from 'aws-amplify';
@@ -152,6 +153,9 @@ const INITIAL_POLLS = [
   },
 ];
 
+// Authentication modal state
+
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -189,6 +193,12 @@ function App() {
   // ----------------------------------------
   // STATE DECLARATIONS
   // ----------------------------------------
+// Authentication modal state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' or 'signup'
+
+  // Get current user from Clerk
+  const { isSignedIn, user } = useUser();
 
   // Which game is currently selected (default to first game)
   const [selectedGame, setSelectedGame] = useState(GAMES[0]);
@@ -712,25 +722,41 @@ function App() {
 
         <h1 className="app-title">Smack Talk Central</h1>
 
-        <div className="top-bar-right">
-          <div className="current-game">
-            <span className="current-game-label">Live:</span>
-            <span className="current-game-name">{selectedGame.name}</span>
-          </div>
-          <button
-            className={`polls-toggle-button ${showPollsSidebar ? 'active' : ''}`}
-            onClick={handleTogglePollsSidebar}
-            aria-expanded={showPollsSidebar}
-            aria-label={showPollsSidebar ? 'Hide polls' : 'Show polls'}
-          >
-            <span className="polls-toggle-icon">📊</span>
-            <span className="polls-toggle-text">
-              {showPollsSidebar ? 'Hide' : 'Polls'}
-            </span>
-          </button>
+       <div className="top-bar-right">
+        <div className="current-game">
+          <span className="current-game-label">Live:</span>
+          <span className="current-game-name">{selectedGame.name}</span>
         </div>
+        
+        {/* User authentication */}
+        {isSignedIn ? (
+          <UserButton afterSignOutUrl="/" />
+        ) : (
+          <button
+            className="auth-button"
+            onClick={() => {
+              setAuthMode('signin');
+              setShowAuthModal(true);
+            }}
+          >
+            Sign In
+          </button>
+        )}
+        
+        <button
+          className={`polls-toggle-button ${showPollsSidebar ? 'active' : ''}`}
+          onClick={handleTogglePollsSidebar}
+          aria-expanded={showPollsSidebar}
+          aria-label={showPollsSidebar ? 'Hide polls' : 'Show polls'}
+        >
+          <span className="polls-toggle-icon">📊</span>
+          <span className="polls-toggle-text">
+            {showPollsSidebar ? 'Hide' : 'Polls'}
+          </span>
+        </button>
+      </div>
       </header>
-
+      
       {/* SCORE TRACKER - Shows current game score */}
       <ScoreTracker
         gameScore={gameScore}
@@ -821,6 +847,35 @@ function App() {
         onClose={handleCloseCreatePoll}
         onSubmit={handleCreatePoll}
       />
+      {/* AUTHENTICATION MODAL */}
+      {showAuthModal && (
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close"
+              onClick={() => setShowAuthModal(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            {authMode === 'signin' ? (
+              <SignIn 
+                routing="virtual"
+                afterSignInUrl="/"
+                signUpUrl="#"
+                onSignUpClick={() => setAuthMode('signup')}
+              />
+            ) : (
+              <SignUp
+                routing="virtual"
+                afterSignUpUrl="/"
+                signInUrl="#"
+                onSignInClick={() => setAuthMode('signin')}
+              />
+ )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

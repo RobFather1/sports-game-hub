@@ -2250,3 +2250,26 @@ html, body {
   white-space: nowrap;
   border: 0;
 }
+/* Authentication button */
+.auth-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.auth-button:hover {
+  background: #0056b3;
+}
+
+/* Authentication modal */
+.auth-modal {
+  max-width: 400px;
+  padding: 0;
+  overflow: visible;
+}
