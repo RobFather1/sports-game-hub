@@ -38,10 +38,3 @@ export async function getMessages(gameId, limit = 50) {
     return [];
   }
 }
-```
-
-**3B. Add the API URL to your environment variables.**
-
-Open your `.env` file in the project root and add this line:
-```
-REACT_APP_API_URL=https://o4trgcru2c.execute-api.us-east-2.amazonaws.com/default/SmackTalkAPI
