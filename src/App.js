@@ -43,6 +43,9 @@ import ReactionBar from './components/ReactionBar';
 import ScoreTracker from './components/ScoreTracker';
 import ScoreControls from './components/ScoreControls';
 
+// DynamoDB service for message persistence
+import { saveMessage, getMessages } from './services/dynamodbService';
+
 // Configure Amplify with AWS AppSync Events
 Amplify.configure(awsConfig);
 
@@ -372,6 +375,45 @@ function App() {
     };
   }, []);
 
+  // Effect to load persisted messages from DynamoDB on mount
+  useEffect(() => {
+    const loadPersistedMessages = async () => {
+      try {
+        console.log('Loading persisted messages from DynamoDB...');
+        const gameId = 'default-game-chat'; // Matches CHAT_CHANNEL concept
+        const persistedMessages = await getMessages(gameId, 50);
+
+        if (persistedMessages.length > 0) {
+          // Convert DynamoDB items to message format and sort oldest first
+          const formattedMessages = persistedMessages
+            .map(item => ({
+              id: item.timestamp, // Use timestamp as ID
+              username: item.username,
+              text: item.text,
+              timestamp: new Date(item.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              type: item.type || 'message',
+            }))
+            .reverse(); // Reverse since DynamoDB returns newest first
+
+          // Mark these message IDs as processed to avoid duplicates
+          formattedMessages.forEach(msg => processedMessageIds.current.add(msg.id));
+
+          // Replace initial messages with persisted ones
+          setMessages(formattedMessages);
+          console.log(`Loaded ${formattedMessages.length} persisted messages`);
+        }
+      } catch (error) {
+        console.error('Failed to load persisted messages:', error);
+        // Keep INITIAL_MESSAGES as fallback
+      }
+    };
+
+    loadPersistedMessages();
+  }, []);
+
   // ----------------------------------------
   // EVENT HANDLERS - Game Selection
   // ----------------------------------------
@@ -422,6 +464,15 @@ function App() {
       console.error('Failed to publish message:', error);
       // Message is already shown locally, so user still sees it
     }
+
+    // Save to DynamoDB for persistence (24-hour TTL)
+    const gameId = 'default-game-chat';
+    saveMessage(gameId, {
+      text: currentMessage,
+      username: CURRENT_USER,
+      timestamp: messageId, // Use numeric timestamp for DynamoDB
+      type: 'message',
+    });
   }, [currentMessage]);
 
   /**
