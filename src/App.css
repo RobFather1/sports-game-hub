@@ -2273,3 +2273,80 @@ html, body {
   padding: 0;
   overflow: visible;
 }
+
+/* Modal close button */
+.modal-close {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 32px;
+  height: 32px;
+  background: var(--white-10);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--white-70);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: var(--white-20);
+  color: var(--white);
+}
+
+/* ============================================
+   ERROR BOUNDARY
+   ============================================ */
+
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--stadium-black);
+  padding: var(--space-lg);
+}
+
+.error-boundary-content {
+  text-align: center;
+  max-width: 400px;
+  padding: var(--space-xl);
+  background: var(--stadium-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--white-10);
+}
+
+.error-boundary-content h2 {
+  font-family: 'Oswald', sans-serif;
+  color: var(--danger);
+  font-size: 24px;
+  margin-bottom: var(--space-md);
+}
+
+.error-boundary-content p {
+  color: var(--white-70);
+  margin-bottom: var(--space-lg);
+}
+
+.error-retry-button {
+  padding: var(--space-md) var(--space-xl);
+  background: var(--electric-orange);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.error-retry-button:hover {
+  background: var(--deep-orange);
+}

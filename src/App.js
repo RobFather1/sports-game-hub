@@ -46,6 +46,9 @@ import ScoreControls from './components/ScoreControls';
 // DynamoDB service for message persistence
 import { saveMessage, getMessages } from './services/dynamodbService';
 
+// Input sanitization utility
+import { sanitizeText, normalizeMessageInput } from './utils/sanitize';
+
 // Configure Amplify with AWS AppSync Events
 Amplify.configure(awsConfig);
 
@@ -155,9 +158,6 @@ const INITIAL_POLLS = [
     status: 'active',
   },
 ];
-
-// Authentication modal state
-
 
 // ============================================
 // HELPER FUNCTIONS
@@ -336,11 +336,11 @@ function App() {
             if (data && data.id && !processedMessageIds.current.has(data.id)) {
               processedMessageIds.current.add(data.id);
 
-              // Add the message to our local state
+              // Add the message to our local state (sanitize incoming data)
               const newMessage = {
                 id: data.id,
-                username: data.username,
-                text: data.text,
+                username: sanitizeText(data.username || ''),
+                text: sanitizeText(data.text || ''),
                 timestamp: data.timestamp,
                 type: data.type || 'message',
               };
@@ -385,11 +385,12 @@ function App() {
 
         if (persistedMessages.length > 0) {
           // Convert DynamoDB items to message format and sort oldest first
+          // Sanitize all incoming data for defense in depth
           const formattedMessages = persistedMessages
             .map(item => ({
               id: item.timestamp, // Use timestamp as ID
-              username: item.username,
-              text: item.text,
+              username: sanitizeText(item.username || ''),
+              text: sanitizeText(item.text || ''),
               timestamp: new Date(item.timestamp).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -432,15 +433,17 @@ function App() {
   };
 
   const handleSendMessage = useCallback(async () => {
-    if (currentMessage.trim() === '') {
+    // Normalize and validate input
+    const sanitizedText = normalizeMessageInput(currentMessage);
+    if (sanitizedText === '') {
       return;
     }
 
     const messageId = Date.now();
     const newMessage = {
       id: messageId,
-      username: CURRENT_USER,
-      text: currentMessage,
+      username: sanitizeText(CURRENT_USER),
+      text: sanitizedText,
       timestamp: getCurrentTimestamp(),
       type: 'message',
     };
