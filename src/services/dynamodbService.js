@@ -1,4 +1,4 @@
-const API_URL = 'https://o4trgcru2c.execute-api.us-east-2.amazonaws.com/default/SmackTalkAPI';
+const API_URL = process.env.REACT_APP_LAMBDA_API_URL;
 
 /**
  * Save a chat message via Lambda

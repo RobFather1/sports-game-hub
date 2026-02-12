@@ -296,6 +296,12 @@ function App() {
   };
 
   const handleSendMessage = useCallback(async () => {
+    if (!isSignedIn) {
+      setAuthMode('signin');
+      setShowAuthModal(true);
+      return;
+    }
+
     const sanitizedText = normalizeMessageInput(currentMessage);
     if (sanitizedText === '') return;
 
@@ -327,7 +333,7 @@ function App() {
       timestamp: messageId,
       type: 'message',
     });
-  }, [currentMessage, currentUsername]);
+  }, [currentMessage, currentUsername, isSignedIn]);
 
   const addSystemMessage = (text) => {
     const systemMessage = {
@@ -346,6 +352,11 @@ function App() {
   // ----------------------------------------
 
   const handleOpenCreatePoll = () => {
+    if (!isSignedIn) {
+      setAuthMode('signin');
+      setShowAuthModal(true);
+      return;
+    }
     setShowCreatePoll(true);
   };
 
@@ -375,6 +386,12 @@ function App() {
   };
 
   const handleVote = (pollId, optionId) => {
+    if (!isSignedIn) {
+      setAuthMode('signin');
+      setShowAuthModal(true);
+      return;
+    }
+
     console.log('Voting on poll:', pollId, 'option:', optionId);
 
     setUserVotes(prev => ({ ...prev, [pollId]: optionId }));
@@ -422,6 +439,12 @@ function App() {
   // ----------------------------------------
 
   const handleReaction = useCallback(async (emoji) => {
+    if (!isSignedIn) {
+      setAuthMode('signin');
+      setShowAuthModal(true);
+      return;
+    }
+
     console.log('Reaction sent:', emoji);
 
     const messageId = Date.now();
@@ -452,7 +475,7 @@ function App() {
     } catch (error) {
       console.error('Failed to publish reaction:', error);
     }
-  }, [currentUsername]);
+  }, [currentUsername, isSignedIn]);
 
   // ----------------------------------------
   // EVENT HANDLERS - Polls Sidebar
