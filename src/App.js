@@ -56,28 +56,6 @@ Amplify.configure(awsConfig);
 // HARDCODED DATA (will be replaced with real data later)
 // ============================================
 
-// Generate a unique username for this session
-const generateUsername = () => {
-  const adjectives = ['Swift', 'Bold', 'Fierce', 'Lucky', 'Wild', 'Mighty', 'Quick', 'Brave'];
-  const nouns = ['Bear', 'Fan', 'Champ', 'Player', 'Star', 'Legend', 'Warrior', 'Hero'];
-  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  const num = Math.floor(Math.random() * 100);
-  return `${adj}${noun}${num}`;
-};
-
-// Store username in sessionStorage so it persists across page refreshes but not sessions
-const getOrCreateUsername = () => {
-  let username = sessionStorage.getItem('chatUsername');
-  if (!username) {
-    username = generateUsername();
-    sessionStorage.setItem('chatUsername', username);
-  }
-  return username;
-};
-
-const CURRENT_USER = getOrCreateUsername();
-
 // List of available games with their sports and team info
 const GAMES = [
   {
@@ -202,6 +180,9 @@ function App() {
 
   // Get current user from Clerk
   const { isSignedIn, user } = useUser();
+
+  // Get username from Clerk user data
+  const currentUsername = user?.username || user?.firstName || 'Anonymous';
 
   // Which game is currently selected (default to first game)
   const [selectedGame, setSelectedGame] = useState(GAMES[0]);
@@ -442,7 +423,7 @@ function App() {
     const messageId = Date.now();
     const newMessage = {
       id: messageId,
-      username: sanitizeText(CURRENT_USER),
+      username: sanitizeText(currentUsername),
       text: sanitizedText,
       timestamp: getCurrentTimestamp(),
       type: 'message',
@@ -472,11 +453,11 @@ function App() {
     const gameId = 'default-game-chat';
     saveMessage(gameId, {
       text: currentMessage,
-      username: CURRENT_USER,
+      username: currentUsername,
       timestamp: messageId, // Use numeric timestamp for DynamoDB
       type: 'message',
     });
-  }, [currentMessage]);
+  }, [currentMessage, currentUsername]);
 
   /**
    * Adds a system message to the chat (for score updates, poll results, etc.)
@@ -526,7 +507,7 @@ function App() {
         votes: 0,
       })),
       totalVotes: 0,
-      createdBy: CURRENT_USER,
+      createdBy: currentUsername,
       createdAt: getCurrentTimestamp(),
       status: 'active',
     };
@@ -629,7 +610,7 @@ function App() {
     // Add reaction message to chat
     const reactionMessage = {
       id: messageId,
-      username: CURRENT_USER,
+      username: currentUsername,
       text: emoji,
       timestamp: getCurrentTimestamp(),
       type: 'reaction',
@@ -642,7 +623,7 @@ function App() {
     } catch (error) {
       console.error('Failed to publish reaction:', error);
     }
-  }, []);
+  }, [currentUsername]);
 
   // ----------------------------------------
   // EVENT HANDLERS - Polls Sidebar
@@ -887,7 +868,7 @@ function App() {
           <PollSidebar
             polls={polls}
             userVotes={userVotes}
-            currentUser={CURRENT_USER}
+            currentUser={currentUsername}
             onCreatePoll={handleOpenCreatePoll}
             onVote={handleVote}
             onClosePoll={handleClosePoll}
