@@ -2350,3 +2350,121 @@ html, body {
 .error-retry-button:hover {
   background: var(--deep-orange);
 }
+
+/* ============================================
+   USER LEVEL BADGE
+   ============================================ */
+
+.user-level-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--orange-muted);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+  border-radius: var(--radius-sm);
+  margin-right: var(--space-sm);
+}
+
+.level-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--electric-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.xp-display {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: var(--space-lg);
+  z-index: 10002;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  pointer-events: none;
+}
+
+.toast {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  box-shadow: var(--shadow-lg);
+  animation: toastSlideIn 0.4s var(--ease-out-back), toastFadeOut 0.3s 2.7s var(--ease-out-expo) forwards;
+  pointer-events: auto;
+}
+
+.toast-info {
+  background: linear-gradient(135deg, var(--stadium-surface) 0%, var(--stadium-mid) 100%);
+  border: 1px solid var(--white-20);
+}
+
+.toast-streak {
+  background: linear-gradient(135deg, #ff6b35 0%, var(--electric-orange) 100%);
+  border: 1px solid var(--glow-orange);
+  box-shadow: 0 4px 20px rgba(255, 87, 34, 0.4);
+}
+
+.toast-levelup {
+  background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+  border: 1px solid var(--live-green);
+  box-shadow: 0 4px 20px rgba(0, 230, 118, 0.4);
+  font-size: 16px;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toastFadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}
+
+/* Mobile adjustments for level badge and toasts */
+@media (max-width: 768px) {
+  .user-level-badge {
+    display: none; /* Hide on mobile header, could show elsewhere */
+  }
+
+  .toast-container {
+    top: auto;
+    bottom: 120px;
+    right: var(--space-md);
+    left: var(--space-md);
+  }
+
+  .toast {
+    font-size: 13px;
+    padding: var(--space-sm) var(--space-md);
+  }
+}

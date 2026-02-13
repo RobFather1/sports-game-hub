@@ -37,6 +37,15 @@ import ReactionBar from './components/ReactionBar';
 // DynamoDB service for message persistence
 import { saveMessage, getMessages } from './services/dynamodbService';
 
+// User stats service for XP and levels
+import {
+  incrementXP,
+  XP_RULES,
+  LEVELS,
+  calculateLevel,
+  calculateStreakBonus,
+} from './services/userStatsService';
+
 // Input sanitization utility
 import { sanitizeText, normalizeMessageInput } from './utils/sanitize';
 
@@ -161,6 +170,16 @@ function App() {
   const [connectionError, setConnectionError] = useState(null);
   const channelRef = useRef(null);
   const processedMessageIds = useRef(new Set());
+
+  // User stats state (XP, level, streak)
+  const [userStats, setUserStats] = useState({
+    xp: 0,
+    level: LEVELS[0],
+    currentStreak: 0,
+  });
+
+  // Toast notifications state
+  const [toasts, setToasts] = useState([]);
 
   // ----------------------------------------
   // EFFECTS
@@ -288,6 +307,77 @@ function App() {
   }, []);
 
   // ----------------------------------------
+  // HELPER FUNCTIONS - Toasts & XP
+  // ----------------------------------------
+
+  const showToast = useCallback((message, type = 'info') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  }, []);
+
+  const calculateCurrentStreak = useCallback((messageList, username) => {
+    // Count consecutive messages from the end by the same user
+    let streak = 0;
+    for (let i = messageList.length - 1; i >= 0; i--) {
+      const msg = messageList[i];
+      if (msg.type === 'message' && msg.username === username) {
+        streak++;
+      } else if (msg.type === 'message') {
+        break; // Different user, stop counting
+      }
+      // Skip reactions and system messages
+    }
+    return streak;
+  }, []);
+
+  const awardXPForMessage = useCallback(async (newMessages) => {
+    if (!user?.id) return;
+
+    const clerkUserId = user.id;
+    let totalXP = XP_RULES.message;
+    const previousLevel = userStats.level;
+
+    // Check streak after adding the new message
+    const streak = calculateCurrentStreak(newMessages, currentUsername);
+
+    // Award streak bonus if milestone hit
+    const streakBonus = calculateStreakBonus(streak);
+    if (streakBonus > 0) {
+      totalXP += streakBonus;
+      showToast(`🔥 Heating Up! ${streak}-message streak! +${streakBonus} XP`, 'streak');
+    }
+
+    // Update local state optimistically
+    setUserStats(prev => {
+      const newXP = prev.xp + totalXP;
+      const newLevel = calculateLevel(newXP);
+
+      // Check for level up
+      if (newLevel.level > previousLevel.level) {
+        setTimeout(() => {
+          showToast(`🎉 Level Up! You're now a ${newLevel.name}!`, 'levelup');
+        }, 100);
+      }
+
+      return {
+        ...prev,
+        xp: newXP,
+        level: newLevel,
+        currentStreak: streak,
+      };
+    });
+
+    // Fire-and-forget API call (non-blocking)
+    incrementXP(clerkUserId, totalXP).catch(err => {
+      console.error('Failed to persist XP:', err);
+    });
+  }, [user?.id, userStats.level, currentUsername, calculateCurrentStreak, showToast]);
+
+  // ----------------------------------------
   // EVENT HANDLERS - Chat Messages
   // ----------------------------------------
 
@@ -318,7 +408,12 @@ function App() {
     setCurrentMessage('');
 
     processedMessageIds.current.add(messageId);
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => {
+      const updatedMessages = [...prev, newMessage];
+      // Award XP non-blocking (fire-and-forget)
+      awardXPForMessage(updatedMessages);
+      return updatedMessages;
+    });
 
     try {
       await events.post(CHAT_CHANNEL, newMessage);
@@ -333,7 +428,7 @@ function App() {
       timestamp: messageId,
       type: 'message',
     });
-  }, [currentMessage, currentUsername, isSignedIn]);
+  }, [currentMessage, currentUsername, isSignedIn, awardXPForMessage]);
 
   const addSystemMessage = (text) => {
     const systemMessage = {
@@ -490,6 +585,12 @@ function App() {
         <h1 className="app-title">Smack Talk Central</h1>
 
         <div className="top-bar-right">
+          {isSignedIn && (
+            <div className="user-level-badge">
+              <span className="level-name">{userStats.level.name}</span>
+              <span className="xp-display">{userStats.xp} XP</span>
+            </div>
+          )}
           {isSignedIn ? (
             <UserButton />
           ) : (
@@ -592,6 +693,15 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* TOAST NOTIFICATIONS */}
+      <div className="toast-container">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
+            {toast.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

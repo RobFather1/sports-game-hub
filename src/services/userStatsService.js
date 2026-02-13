@@ -7,6 +7,61 @@
 
 const API_URL = process.env.REACT_APP_LAMBDA_API_URL;
 
+// ============================================
+// XP RULES & LEVELS
+// ============================================
+
+/**
+ * XP point values for different actions
+ */
+export const XP_RULES = {
+  message: 5,
+  streak3: 15,
+  streak5: 30,
+  streak10: 50,
+  smackdown: 25, // 3+ reactions on a message
+  pollVote: 5,
+  pollCreate: 10,
+};
+
+/**
+ * Level definitions with XP thresholds
+ */
+export const LEVELS = [
+  { level: 1, name: 'Rookie Ranter', xpRequired: 0 },
+  { level: 2, name: 'Sideline Sniper', xpRequired: 100 },
+  { level: 3, name: 'Halftime Heckler', xpRequired: 300 },
+  { level: 4, name: 'Fourth-Quarter Fiend', xpRequired: 600 },
+  { level: 5, name: 'Hall-of-Flame', xpRequired: 1000 },
+];
+
+/**
+ * Calculate the user's level based on their XP
+ * @param {number} xp - The user's current XP
+ * @returns {object} The level object { level, name, xpRequired }
+ */
+export function calculateLevel(xp) {
+  // Find the highest level the user qualifies for
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (xp >= LEVELS[i].xpRequired) {
+      return LEVELS[i];
+    }
+  }
+  return LEVELS[0];
+}
+
+/**
+ * Calculate bonus XP for streak milestones
+ * @param {number} streakCount - The user's current streak count
+ * @returns {number} Bonus XP if a milestone was hit, otherwise 0
+ */
+export function calculateStreakBonus(streakCount) {
+  if (streakCount === 10) return XP_RULES.streak10;
+  if (streakCount === 5) return XP_RULES.streak5;
+  if (streakCount === 3) return XP_RULES.streak3;
+  return 0;
+}
+
 /**
  * Fetch a user's stats
  * GET /user-stats?clerkUserId=xxx
