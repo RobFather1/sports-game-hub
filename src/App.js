@@ -439,12 +439,6 @@ function App() {
   // ----------------------------------------
 
   const handleReaction = useCallback(async (emoji) => {
-    if (!isSignedIn) {
-      setAuthMode('signin');
-      setShowAuthModal(true);
-      return;
-    }
-
     console.log('Reaction sent:', emoji);
 
     const messageId = Date.now();
@@ -475,7 +469,7 @@ function App() {
     } catch (error) {
       console.error('Failed to publish reaction:', error);
     }
-  }, [currentUsername, isSignedIn]);
+  }, [currentUsername]);
 
   // ----------------------------------------
   // EVENT HANDLERS - Polls Sidebar
