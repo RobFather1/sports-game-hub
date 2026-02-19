@@ -132,7 +132,7 @@ export async function updateUserStats(clerkUserId, updates) {
  * @param {number} amount - Amount of XP to add
  * @returns {object|null} Updated stats with new XP and level
  */
-export async function incrementXP(clerkUserId, amount) {
+export async function incrementXP(clerkUserId, username, amount) {
   if (!clerkUserId) {
     console.error('incrementXP: clerkUserId is required');
     return null;
@@ -142,7 +142,7 @@ export async function incrementXP(clerkUserId, amount) {
     const response = await fetch(`${API_URL}/user-stats/xp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clerkUserId, amount }),
+      body: JSON.stringify({ clerkUserId, username, amount }),
     });
 
     if (!response.ok) {

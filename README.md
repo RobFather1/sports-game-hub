@@ -1,70 +1,132 @@
-# Getting Started with Create React App
+# Smack Talk Central
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A real-time sports fan chat app. Send messages, run polls, react with emojis, and climb the leaderboard while watching the game.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Real-time chat** — powered by AWS AppSync Events; messages sync instantly across all connected users
+- **Polls** — create and vote on polls during the game; see live vote percentages
+- **Reactions** — quick emoji reactions (🔥 👍 😮 💪 😂) with a 30-second rolling count
+- **XP & Levels** — earn XP for messages, streaks, and poll activity; progress through 5 levels
+- **Leaderboard** — top 10 users ranked by XP
+- **Authentication** — sign in / sign up via Clerk
+- **Message persistence** — last 50 messages loaded from DynamoDB on startup
 
-### `npm start`
+### XP System
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+| Action | XP |
+|--------|----|
+| Send a message | 5 |
+| 3-message streak | +15 |
+| 5-message streak | +30 |
+| 10-message streak | +50 |
+| Create a poll | 10 |
+| Vote on a poll | 5 |
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Levels
 
-### `npm test`
+| Level | Name | XP Required |
+|-------|------|-------------|
+| 1 | Rookie Ranter | 0 |
+| 2 | Sideline Sniper | 100 |
+| 3 | Halftime Heckler | 300 |
+| 4 | Fourth-Quarter Fiend | 600 |
+| 5 | Hall-of-Flame | 1000 |
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## Tech Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Create React App |
+| Auth | Clerk |
+| Real-time | AWS AppSync Events |
+| Persistence | AWS DynamoDB via Lambda (API Gateway) |
+| Styling | Plain CSS with CSS custom properties |
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Getting Started
 
-### `npm run eject`
+### Prerequisites
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- Node.js 18+
+- A [Clerk](https://clerk.com) account
+- An AWS account with AppSync Events and a Lambda/API Gateway backend configured
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Installation
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+git clone <repo-url>
+cd sports-game-hub
+npm install
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Environment Variables
 
-## Learn More
+Copy `.env.example` to `.env` and fill in your values:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+cp .env.example .env
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+| Variable | Description |
+|----------|-------------|
+| `REACT_APP_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (from Clerk dashboard) |
+| `REACT_APP_APPSYNC_ENDPOINT` | AppSync Events API endpoint URL |
+| `REACT_APP_APPSYNC_REGION` | AWS region (e.g. `us-east-2`) |
+| `REACT_APP_APPSYNC_API_KEY` | AppSync API key (starts with `da2-`) |
+| `REACT_APP_LAMBDA_API_URL` | API Gateway URL for the SmackTalkAPI Lambda |
 
-### Code Splitting
+### Run Locally
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+npm start
+```
 
-### Analyzing the Bundle Size
+Opens at [http://localhost:3000](http://localhost:3000).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Build for Production
 
-### Making a Progressive Web App
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```
+src/
+├── App.js                  # Root component — state, effects, layout
+├── App.css                 # All styles (CSS custom properties)
+├── aws-config.js           # Amplify / AppSync configuration
+├── components/
+│   ├── ChatDisplay.js      # Scrollable message list
+│   ├── MessageInput.js     # Text input + send button
+│   ├── ReactionBar.js      # Emoji reaction buttons
+│   ├── PollSidebar.js      # Polls panel (create, vote, view results)
+│   ├── CreatePoll.js       # New poll modal
+│   ├── LeaderboardSidebar.js # Top users ranked by XP
+│   ├── ScoreControls.js    # Score input controls (unused)
+│   ├── ScoreTracker.js     # Live score display (unused)
+│   ├── GameSelector.js     # Multi-room selector (unused)
+│   └── ErrorBoundary.js    # React error boundary
+├── services/
+│   ├── dynamodbService.js  # Message persistence (save / load)
+│   └── userStatsService.js # XP, levels, leaderboard API calls
+└── utils/
+    └── sanitize.js         # Input sanitization (XSS prevention)
+```
 
-### Deployment
+### Backend API Endpoints (Lambda)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/messages?gameId=&limit=` | Load recent messages |
+| `POST` | `/messages` | Save a message |
+| `GET` | `/user-stats?clerkUserId=` | Fetch a user's stats |
+| `POST` | `/user-stats` | Update user stats fields |
+| `POST` | `/user-stats/xp` | Increment XP (and upsert username) |
+| `GET` | `/leaderboard?limit=` | Top users by XP |

@@ -31,6 +31,7 @@ import awsConfig, { CHAT_CHANNEL } from './aws-config';
 import ChatDisplay from './components/ChatDisplay';
 import MessageInput from './components/MessageInput';
 import PollSidebar from './components/PollSidebar';
+import LeaderboardSidebar from './components/LeaderboardSidebar';
 import CreatePoll from './components/CreatePoll';
 import ReactionBar from './components/ReactionBar';
 
@@ -39,6 +40,7 @@ import { saveMessage, getMessages } from './services/dynamodbService';
 
 // User stats service for XP and levels
 import {
+  getUserStats,
   incrementXP,
   XP_RULES,
   LEVELS,
@@ -164,6 +166,9 @@ function App() {
 
   // Polls sidebar visibility
   const [showPollsSidebar, setShowPollsSidebar] = useState(false);
+
+  // Leaderboard sidebar visibility
+  const [showLeaderboardSidebar, setShowLeaderboardSidebar] = useState(false);
 
   // Real-time chat connection state
   const [isConnected, setIsConnected] = useState(false);
@@ -306,6 +311,24 @@ function App() {
     loadPersistedMessages();
   }, []);
 
+  // Load user stats from backend when signed in
+  useEffect(() => {
+    if (!isSignedIn || !user?.id) return;
+
+    const initUserStats = async () => {
+      const stats = await getUserStats(user.id);
+      if (stats) {
+        setUserStats({
+          xp: stats.xp || 0,
+          level: calculateLevel(stats.xp || 0),
+          currentStreak: 0, // streak is session-only
+        });
+      }
+    };
+
+    initUserStats();
+  }, [isSignedIn, user?.id]);
+
   // ----------------------------------------
   // HELPER FUNCTIONS - Toasts & XP
   // ----------------------------------------
@@ -372,7 +395,7 @@ function App() {
     });
 
     // Fire-and-forget API call (non-blocking)
-    incrementXP(clerkUserId, totalXP).catch(err => {
+    incrementXP(clerkUserId, currentUsername, totalXP).catch(err => {
       console.error('Failed to persist XP:', err);
     });
   }, [user?.id, userStats.level, currentUsername, calculateCurrentStreak, showToast]);
@@ -572,6 +595,12 @@ function App() {
 
   const handleTogglePollsSidebar = () => {
     setShowPollsSidebar(prev => !prev);
+    setShowLeaderboardSidebar(false);
+  };
+
+  const handleToggleLeaderboard = () => {
+    setShowLeaderboardSidebar(prev => !prev);
+    setShowPollsSidebar(false);
   };
 
   // ----------------------------------------
@@ -616,6 +645,18 @@ function App() {
               {showPollsSidebar ? 'Hide' : 'Polls'}
             </span>
           </button>
+
+          <button
+            className={`leaderboard-toggle-button ${showLeaderboardSidebar ? 'active' : ''}`}
+            onClick={handleToggleLeaderboard}
+            aria-expanded={showLeaderboardSidebar}
+            aria-label={showLeaderboardSidebar ? 'Hide leaderboard' : 'Show leaderboard'}
+          >
+            <span className="leaderboard-toggle-icon">🏆</span>
+            <span className="leaderboard-toggle-text">
+              {showLeaderboardSidebar ? 'Hide' : 'Top'}
+            </span>
+          </button>
         </div>
       </header>
 
@@ -654,6 +695,11 @@ function App() {
             onVote={handleVote}
             onClosePoll={handleClosePoll}
           />
+        </aside>
+
+        {/* RIGHT SIDEBAR - Leaderboard */}
+        <aside className={`sidebar-right ${showLeaderboardSidebar ? 'visible' : 'hidden'}`}>
+          <LeaderboardSidebar currentUser={currentUsername} />
         </aside>
       </div>
 
