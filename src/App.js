@@ -57,66 +57,6 @@ Amplify.configure(awsConfig);
 const GAME_ID = 'smacktalk-main';
 
 // ============================================
-// HARDCODED DATA
-// ============================================
-
-// Sample chat messages to start with (mock data)
-const INITIAL_MESSAGES = [
-  {
-    id: 1,
-    username: 'BearsFan85',
-    text: 'Da Bears are looking good today!',
-    timestamp: '2:30 PM',
-    type: 'message',
-  },
-  {
-    id: 2,
-    username: 'ChicagoNative',
-    text: 'That last play was incredible!',
-    timestamp: '2:32 PM',
-    type: 'message',
-  },
-  {
-    id: 3,
-    username: 'GridironGuru',
-    text: 'Defense is playing solid. Keep it up!',
-    timestamp: '2:35 PM',
-    type: 'message',
-  },
-  {
-    id: 4,
-    username: 'WindyCityFan',
-    text: 'Anyone else at the stadium right now?',
-    timestamp: '2:38 PM',
-    type: 'message',
-  },
-  {
-    id: 5,
-    username: 'SportsJunkie22',
-    text: 'Watching from home but the energy is amazing!',
-    timestamp: '2:40 PM',
-    type: 'message',
-  },
-];
-
-// Sample polls to start with
-const INITIAL_POLLS = [
-  {
-    id: 'poll-1',
-    question: 'Will Bears score on this drive?',
-    options: [
-      { id: 1, text: 'Yes - Touchdown!', votes: 8 },
-      { id: 2, text: 'Yes - Field Goal', votes: 5 },
-      { id: 3, text: 'No - Turnover', votes: 2 },
-    ],
-    totalVotes: 15,
-    createdBy: 'BearsFan85',
-    createdAt: '2:25 PM',
-    status: 'active',
-  },
-];
-
-// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
@@ -142,14 +82,14 @@ function App() {
   // Get username from Clerk user data
   const currentUsername = user?.username || user?.firstName || 'Anonymous';
 
-  // All the chat messages (start with our mock data)
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  // All the chat messages (start empty)
+  const [messages, setMessages] = useState([]);
 
   // What the user is currently typing in the input
   const [currentMessage, setCurrentMessage] = useState('');
 
   // Polls state
-  const [polls, setPolls] = useState(INITIAL_POLLS);
+  const [polls, setPolls] = useState([]);
   const [userVotes, setUserVotes] = useState({});
   const [showCreatePoll, setShowCreatePoll] = useState(false);
 

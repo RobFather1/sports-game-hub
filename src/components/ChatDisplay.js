@@ -87,7 +87,7 @@ function ChatDisplay({ messages }) {
           Otherwise, map through and display each message.
         */}
         {messages.length === 0 ? (
-          <p className="no-messages">No messages yet. Start the conversation!</p>
+          <p className="no-messages">Well are you gonna Smack Talk me, punk?</p>
         ) : (
           messages.map(renderMessage)
         )}

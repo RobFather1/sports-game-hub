@@ -107,9 +107,6 @@ src/
 │   ├── ReactionBar.js      # Emoji reaction buttons
 │   ├── PollSidebar.js      # Polls panel (create, vote, view results)
 │   ├── CreatePoll.js       # New poll modal
-│   ├── ScoreControls.js    # Score input controls (unused)
-│   ├── ScoreTracker.js     # Live score display (unused)
-│   ├── GameSelector.js     # Multi-room selector (unused)
 │   └── ErrorBoundary.js    # React error boundary
 ├── services/
 │   ├── dynamodbService.js  # Message persistence (save / load)
