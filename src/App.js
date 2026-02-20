@@ -31,7 +31,6 @@ import awsConfig, { CHAT_CHANNEL } from './aws-config';
 import ChatDisplay from './components/ChatDisplay';
 import MessageInput from './components/MessageInput';
 import PollSidebar from './components/PollSidebar';
-import LeaderboardSidebar from './components/LeaderboardSidebar';
 import CreatePoll from './components/CreatePoll';
 import ReactionBar from './components/ReactionBar';
 
@@ -166,9 +165,6 @@ function App() {
 
   // Polls sidebar visibility
   const [showPollsSidebar, setShowPollsSidebar] = useState(false);
-
-  // Leaderboard sidebar visibility
-  const [showLeaderboardSidebar, setShowLeaderboardSidebar] = useState(false);
 
   // Real-time chat connection state
   const [isConnected, setIsConnected] = useState(false);
@@ -595,12 +591,6 @@ function App() {
 
   const handleTogglePollsSidebar = () => {
     setShowPollsSidebar(prev => !prev);
-    setShowLeaderboardSidebar(false);
-  };
-
-  const handleToggleLeaderboard = () => {
-    setShowLeaderboardSidebar(prev => !prev);
-    setShowPollsSidebar(false);
   };
 
   // ----------------------------------------
@@ -645,18 +635,6 @@ function App() {
               {showPollsSidebar ? 'Hide' : 'Polls'}
             </span>
           </button>
-
-          <button
-            className={`leaderboard-toggle-button ${showLeaderboardSidebar ? 'active' : ''}`}
-            onClick={handleToggleLeaderboard}
-            aria-expanded={showLeaderboardSidebar}
-            aria-label={showLeaderboardSidebar ? 'Hide leaderboard' : 'Show leaderboard'}
-          >
-            <span className="leaderboard-toggle-icon">🏆</span>
-            <span className="leaderboard-toggle-text">
-              {showLeaderboardSidebar ? 'Hide' : 'Top'}
-            </span>
-          </button>
         </div>
       </header>
 
@@ -695,11 +673,6 @@ function App() {
             onVote={handleVote}
             onClosePoll={handleClosePoll}
           />
-        </aside>
-
-        {/* RIGHT SIDEBAR - Leaderboard */}
-        <aside className={`sidebar-right ${showLeaderboardSidebar ? 'visible' : 'hidden'}`}>
-          <LeaderboardSidebar currentUser={currentUsername} />
         </aside>
       </div>
 

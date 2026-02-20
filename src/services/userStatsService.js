@@ -157,26 +157,3 @@ export async function incrementXP(clerkUserId, username, amount) {
     return null;
   }
 }
-
-/**
- * Get leaderboard of top users by XP
- * GET /leaderboard?limit=10
- * @param {number} limit - Number of users to return (default 10)
- * @returns {Array} Array of user stats sorted by XP descending
- */
-export async function getLeaderboard(limit = 10) {
-  try {
-    const response = await fetch(`${API_URL}/leaderboard?limit=${limit}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(`Leaderboard loaded: ${data.leaderboard?.length || 0} users`);
-    return data.leaderboard || [];
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    return [];
-  }
-}

@@ -1,6 +1,6 @@
 # Smack Talk Central
 
-A real-time sports fan chat app. Send messages, run polls, react with emojis, and climb the leaderboard while watching the game.
+A real-time sports fan chat app. Send messages, run polls, and react with emojis while watching the game.
 
 ## Features
 
@@ -8,7 +8,6 @@ A real-time sports fan chat app. Send messages, run polls, react with emojis, an
 - **Polls** — create and vote on polls during the game; see live vote percentages
 - **Reactions** — quick emoji reactions (🔥 👍 😮 💪 😂) with a 30-second rolling count
 - **XP & Levels** — earn XP for messages, streaks, and poll activity; progress through 5 levels
-- **Leaderboard** — top 10 users ranked by XP
 - **Authentication** — sign in / sign up via Clerk
 - **Message persistence** — last 50 messages loaded from DynamoDB on startup
 
@@ -108,14 +107,13 @@ src/
 │   ├── ReactionBar.js      # Emoji reaction buttons
 │   ├── PollSidebar.js      # Polls panel (create, vote, view results)
 │   ├── CreatePoll.js       # New poll modal
-│   ├── LeaderboardSidebar.js # Top users ranked by XP
 │   ├── ScoreControls.js    # Score input controls (unused)
 │   ├── ScoreTracker.js     # Live score display (unused)
 │   ├── GameSelector.js     # Multi-room selector (unused)
 │   └── ErrorBoundary.js    # React error boundary
 ├── services/
 │   ├── dynamodbService.js  # Message persistence (save / load)
-│   └── userStatsService.js # XP, levels, leaderboard API calls
+│   └── userStatsService.js # XP and levels management
 └── utils/
     └── sanitize.js         # Input sanitization (XSS prevention)
 ```
@@ -129,4 +127,3 @@ src/
 | `GET` | `/user-stats?clerkUserId=` | Fetch a user's stats |
 | `POST` | `/user-stats` | Update user stats fields |
 | `POST` | `/user-stats/xp` | Increment XP (and upsert username) |
-| `GET` | `/leaderboard?limit=` | Top users by XP |
