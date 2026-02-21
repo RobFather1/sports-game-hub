@@ -64,7 +64,7 @@ function ChatDisplay({ messages }) {
       );
     }
 
-    // Regular chat message
+// Regular chat message
     return (
       <div key={message.id} className="message">
         {/* Message header: username and timestamp */}
@@ -72,8 +72,20 @@ function ChatDisplay({ messages }) {
           <span className="message-username">{message.username}</span>
           <span className="message-timestamp">{message.timestamp}</span>
         </div>
-        {/* The actual message text */}
-        <p className="message-text">{message.text}</p>
+        {/* The actual message text (only show if there is text) */}
+        {message.text && (
+          <p className="message-text">{message.text}</p>
+        )}
+        {/* GIF or clip media (only show if message has media attached) */}
+        {message.media && message.media.type === 'gif' && (
+          <div className="message-gif-container">
+            <img
+              src={message.media.url}
+              alt={message.media.alt}
+              className="message-gif"
+            />
+          </div>
+        )}
       </div>
     );
   };
