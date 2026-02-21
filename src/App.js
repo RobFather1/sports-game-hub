@@ -33,6 +33,7 @@ import MessageInput from './components/MessageInput';
 import PollSidebar from './components/PollSidebar';
 import CreatePoll from './components/CreatePoll';
 import ReactionBar from './components/ReactionBar';
+import KlipyPicker from './components/KlipyPicker';
 
 // DynamoDB service for message persistence
 import { saveMessage, getMessages } from './services/dynamodbService';
@@ -92,6 +93,9 @@ function App() {
   const [polls, setPolls] = useState([]);
   const [userVotes, setUserVotes] = useState({});
   const [showCreatePoll, setShowCreatePoll] = useState(false);
+
+  // Klipy picker state
+  const [showKlipyPicker, setShowKlipyPicker] = useState(false);
 
   // Reactions state
   const [reactionCounts, setReactionCounts] = useState({
@@ -534,6 +538,60 @@ function App() {
   };
 
   // ----------------------------------------
+  // EVENT HANDLERS - Klipy Picker
+  // ----------------------------------------
+
+  const handleOpenKlipyPicker = () => {
+    if (!isSignedIn) {
+      setAuthMode('signin');
+      setShowAuthModal(true);
+      return;
+    }
+    setShowKlipyPicker(true);
+  };
+
+  const handleCloseKlipyPicker = () => {
+    setShowKlipyPicker(false);
+  };
+
+  const handleSelectGif = (url, alt, width, height) => {
+    console.log('GIF selected:', alt);
+
+    const gifData = { type: 'gif', url, alt, width, height };
+    const messageId = Date.now();
+
+    const newMessage = {
+      id: messageId,
+      username: sanitizeText(currentUsername),
+      text: '', // GIF-only message (no caption for now)
+      timestamp: getCurrentTimestamp(),
+      type: 'message',
+      media: gifData,
+    };
+
+    // Optimistic UI update
+    processedMessageIds.current.add(messageId);
+    setMessages(prev => [...prev, newMessage]);
+
+    // Award XP
+    awardXPForMessage([...messages, newMessage]);
+
+    // Publish to AppSync Events
+    events.post(CHAT_CHANNEL, newMessage).catch(console.error);
+
+    // Save to DynamoDB
+    saveMessage(GAME_ID, {
+      text: '',
+      username: currentUsername,
+      timestamp: messageId,
+      type: 'message',
+      media: gifData,
+    });
+
+    setShowKlipyPicker(false);
+  };
+
+  // ----------------------------------------
   // RENDER
   // ----------------------------------------
 
@@ -600,6 +658,7 @@ function App() {
             currentMessage={currentMessage}
             onMessageChange={handleMessageChange}
             onSendMessage={handleSendMessage}
+            onOpenKlipyPicker={handleOpenKlipyPicker}
           />
         </main>
 
@@ -621,6 +680,13 @@ function App() {
         isOpen={showCreatePoll}
         onClose={handleCloseCreatePoll}
         onSubmit={handleCreatePoll}
+      />
+
+      {/* KLIPY PICKER MODAL */}
+      <KlipyPicker
+        isOpen={showKlipyPicker}
+        onClose={handleCloseKlipyPicker}
+        onSelectContent={handleSelectGif}
       />
 
       {/* AUTHENTICATION MODAL */}

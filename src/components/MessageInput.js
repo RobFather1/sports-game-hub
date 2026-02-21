@@ -13,7 +13,7 @@
 
 // No imports needed - this is a simple component with no hooks
 
-function MessageInput({ currentMessage, onMessageChange, onSendMessage }) {
+function MessageInput({ currentMessage, onMessageChange, onSendMessage, onOpenKlipyPicker }) {
   /**
    * Handles the send action
    * This function is called when the user clicks Send or presses Enter
@@ -58,6 +58,17 @@ function MessageInput({ currentMessage, onMessageChange, onSendMessage }) {
         onKeyPress={handleKeyPress}
         placeholder="Type your message..."
       />
+
+      {/* GIF Button */}
+      <button
+        className="gif-button"
+        onClick={onOpenKlipyPicker}
+        aria-label="Send GIF or Clip"
+        title="Send a sports GIF or clip"
+        type="button"
+      >
+        GIF
+      </button>
 
       {/* Send button */}
       <button
