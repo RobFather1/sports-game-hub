@@ -187,6 +187,7 @@ function App() {
                 text: sanitizeText(data.text || ''),
                 timestamp: data.timestamp,
                 type: data.type || 'message',
+                media: data.media || null,
               };
 
               setMessages(prev => [...prev, newMessage]);
