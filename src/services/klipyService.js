@@ -62,7 +62,8 @@ export async function searchContent(query, page = 0) {
     const data = await response.json();
 
     // Klipy API returns data in a 'data' field
-    const items = data.data || [];
+    console.log('Full Klipy search response:', JSON.stringify(data));
+    const items = data.data?.data || data.data || [];
     console.log(`Found ${items.length} results for "${query}"`);
 
     return formatContentResults(items);
@@ -99,7 +100,8 @@ export async function getTrendingContent(page = 0) {
     const data = await response.json();
 
     // Klipy API returns data in a 'data' field
-    const items = data.data || [];
+    console.log('Full Klipy trending response:', JSON.stringify(data));
+    const items = data.data?.data || data.data || [];
     console.log(`Loaded ${items.length} trending items`);
 
     return formatContentResults(items);
@@ -126,9 +128,9 @@ function formatContentResults(items) {
     const contentType = item.type || 'gif';
 
     // Extract file URLs (Klipy provides multiple formats)
-    const gifUrl = item.file?.gif || item.images?.original?.url || '';
-    const mp4Url = item.file?.mp4 || item.images?.original?.mp4 || '';
-    const webpUrl = item.file?.webp || '';
+    const gifUrl = item.gif || item.file?.gif || item.images?.original?.url || '';
+    const mp4Url = item.mp4 || item.file?.mp4 || item.images?.original?.mp4 || '';
+    const webpUrl = item.webp || item.file?.webp || '';
 
     // Use GIF URL as primary, fallback to MP4 if GIF not available
     const primaryUrl = gifUrl || mp4Url || webpUrl;
