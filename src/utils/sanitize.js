@@ -59,3 +59,113 @@ export function normalizeMessageInput(text, maxLength = 500) {
   }
   return text.trim().slice(0, maxLength);
 }
+
+/**
+ * Allowed domains for media content (GIFs)
+ */
+const ALLOWED_MEDIA_DOMAINS = [
+  'media.giphy.com',
+  'giphy.com',
+  'i.giphy.com',
+  'media0.giphy.com',
+  'media1.giphy.com',
+  'media2.giphy.com',
+  'media3.giphy.com',
+  'media4.giphy.com',
+  'tenor.com',
+  'media.tenor.com',
+  'c.tenor.com',
+  'klipy.com',
+  'static.klipy.com',
+];
+
+/**
+ * Validates and sanitizes media URLs to prevent malicious content
+ * @param {object} media - Media object with url, type, and alt properties
+ * @returns {object|null} - Sanitized media object or null if invalid
+ */
+export function sanitizeMedia(media) {
+  console.log('🔍 sanitizeMedia input:', media);
+
+  // Check if media exists and is an object
+  if (!media || typeof media !== 'object') {
+    console.log('❌ Media validation failed: not an object');
+    return null;
+  }
+
+  // Validate media type
+  if (media.type !== 'gif') {
+    console.log('❌ Media validation failed: type is not gif, got:', media.type);
+    return null;
+  }
+
+  // Validate URL
+  if (typeof media.url !== 'string' || !media.url) {
+    console.log('❌ Media validation failed: invalid URL');
+    return null;
+  }
+
+  try {
+    const url = new URL(media.url);
+
+    // Only allow HTTPS protocol
+    if (url.protocol !== 'https:') {
+      console.log('❌ Media validation failed: not HTTPS, got:', url.protocol);
+      return null;
+    }
+
+    // Check if domain is in allowed list
+    const isAllowedDomain = ALLOWED_MEDIA_DOMAINS.some(domain =>
+      url.hostname === domain || url.hostname.endsWith('.' + domain)
+    );
+
+    if (!isAllowedDomain) {
+      console.log('❌ Media validation failed: domain not allowed:', url.hostname);
+      return null;
+    }
+
+    // Return sanitized media object
+    const sanitized = {
+      type: 'gif',
+      url: media.url,
+      alt: sanitizeText(media.alt || 'GIF'),
+    };
+    console.log('✅ Media sanitized successfully:', sanitized);
+    return sanitized;
+  } catch (error) {
+    // Invalid URL format
+    console.log('❌ Media validation failed: URL parse error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Sanitizes a message with media content
+ * @param {object} message - Message object with text, username, and optional media
+ * @returns {object} - Message with sanitized fields
+ */
+export function sanitizeMessageWithMedia(message) {
+  if (!message || typeof message !== 'object') {
+    return message;
+  }
+
+  // Start with basic text/username sanitization
+  const sanitized = {
+    ...message,
+    text: sanitizeText(message.text),
+    username: sanitizeText(message.username),
+  };
+
+  // Sanitize media if present
+  if (message.media) {
+    const sanitizedMedia = sanitizeMedia(message.media);
+    if (sanitizedMedia) {
+      sanitized.media = sanitizedMedia;
+    } else {
+      // Remove invalid media
+      delete sanitized.media;
+    }
+  }
+
+  return sanitized;
+}

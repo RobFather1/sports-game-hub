@@ -49,7 +49,7 @@ import {
 } from './services/userStatsService';
 
 // Input sanitization utility
-import { sanitizeText, normalizeMessageInput } from './utils/sanitize';
+import { sanitizeText, normalizeMessageInput, sanitizeMessageWithMedia } from './utils/sanitize';
 
 // Configure Amplify with AWS AppSync Events
 Amplify.configure(awsConfig);
@@ -181,14 +181,20 @@ function App() {
             if (data && data.id && !processedMessageIds.current.has(data.id)) {
               processedMessageIds.current.add(data.id);
 
-              const newMessage = {
+              console.log('🔵 Received message from AppSync:', data);
+              console.log('🔵 Media field in received data:', data.media);
+
+              const newMessage = sanitizeMessageWithMedia({
                 id: data.id,
-                username: sanitizeText(data.username || ''),
-                text: sanitizeText(data.text || ''),
+                username: data.username || '',
+                text: data.text || '',
                 timestamp: data.timestamp,
                 type: data.type || 'message',
-                media: data.media || null,
-              };
+                media: data.media || undefined,
+              });
+
+              console.log('🟢 After sanitization:', newMessage);
+              console.log('🟢 Media field after sanitization:', newMessage.media);
 
               setMessages(prev => [...prev, newMessage]);
             }
@@ -228,15 +234,16 @@ function App() {
 
         if (persistedMessages.length > 0) {
           const formattedMessages = persistedMessages
-            .map(item => ({
+            .map(item => sanitizeMessageWithMedia({
               id: item.timestamp,
-              username: sanitizeText(item.username || ''),
-              text: sanitizeText(item.text || ''),
+              username: item.username || '',
+              text: item.text || '',
               timestamp: new Date(item.timestamp).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               }),
               type: item.type || 'message',
+              media: item.media || undefined,
             }))
             .reverse();
 
@@ -569,6 +576,9 @@ function App() {
       type: 'message',
       media: gifData,
     };
+
+    console.log('🟡 Publishing message to AppSync:', newMessage);
+    console.log('🟡 Media field being sent:', newMessage.media);
 
     // Optimistic UI update
     processedMessageIds.current.add(messageId);

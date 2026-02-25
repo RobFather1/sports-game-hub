@@ -19,12 +19,15 @@
  *   - type: 'message', 'reaction', or 'system'
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function ChatDisplay({ messages }) {
   // useRef creates a reference to a DOM element
   // We'll use this to scroll to the bottom of the chat
   const chatEndRef = useRef(null);
+
+  // Track failed image URLs to hide them gracefully
+  const [failedImages, setFailedImages] = useState(new Set());
 
   // useEffect runs code when something changes
   // Here, we scroll to bottom whenever messages array changes
@@ -36,6 +39,14 @@ function ChatDisplay({ messages }) {
     }
     console.log('Chat updated, scrolling to bottom. Total messages:', messages.length);
   }, [messages]); // The [messages] means "run this when messages changes"
+
+  /**
+   * Handles image load errors by tracking failed URLs
+   */
+  const handleImageError = (imageUrl) => {
+    console.warn('Failed to load image:', imageUrl);
+    setFailedImages(prev => new Set([...prev, imageUrl]));
+  };
 
   /**
    * Renders a single message based on its type
@@ -76,13 +87,14 @@ function ChatDisplay({ messages }) {
         {message.text && (
           <p className="message-text">{message.text}</p>
         )}
-        {/* GIF or clip media (only show if message has media attached) */}
-        {message.media && message.media.type === 'gif' && (
+        {/* GIF or clip media (only show if message has media attached and hasn't failed) */}
+        {message.media && message.media.type === 'gif' && !failedImages.has(message.media.url) && (
           <div className="message-gif-container">
             <img
               src={message.media.url}
               alt={message.media.alt}
               className="message-gif"
+              onError={() => handleImageError(message.media.url)}
             />
           </div>
         )}
