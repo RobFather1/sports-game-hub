@@ -5,21 +5,32 @@ const API_URL = process.env.REACT_APP_LAMBDA_API_URL;
  */
 export async function saveMessage(gameId, message) {
   try {
+    const payload = {
+      gameId: gameId,
+      text: message.text,
+      username: message.username,
+      timestamp: message.timestamp,
+      type: message.type || 'message',
+    };
+
+    // Include media field if present
+    if (message.media) {
+      payload.media = message.media;
+    }
+
+    console.log('💾 Saving message to DynamoDB:', payload);
+
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        gameId: gameId,
-        text: message.text,
-        username: message.username
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
-    console.log('Message saved:', data);
+    console.log('✅ Message saved to DynamoDB:', data);
     return data.item;
   } catch (error) {
-    console.error('Error saving message:', error);
+    console.error('❌ Error saving message to DynamoDB:', error);
     return null;
   }
 }
