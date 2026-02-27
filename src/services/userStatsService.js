@@ -77,8 +77,8 @@ export async function getUserStats(clerkUserId) {
 
   try {
     const response = await fetch(
-      `${API_URL}/user-stats?clerkUserId=${encodeURIComponent(clerkUserId)}`
-    );
+  `${API_URL}?clerkUserId=${encodeURIComponent(clerkUserId)}`
+   );
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -107,7 +107,7 @@ export async function updateUserStats(clerkUserId, updates) {
   }
 
   try {
-    const response = await fetch(`${API_URL}/user-stats`, {
+    const response = await fetch(`${API_URL}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'updateStats', clerkUserId, updates }),
@@ -140,7 +140,7 @@ export async function incrementXP(clerkUserId, username, amount) {
   }
 
   try {
-    const response = await fetch(`${API_URL}/user-stats/xp`, {
+    const response = await fetch(`${API_URL}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'xp', clerkUserId, username, amount }),
