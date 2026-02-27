@@ -110,7 +110,7 @@ export async function updateUserStats(clerkUserId, updates) {
     const response = await fetch(`${API_URL}/user-stats`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clerkUserId, updates }),
+      body: JSON.stringify({ action: 'updateStats', clerkUserId, updates }),
     });
 
     if (!response.ok) {
@@ -143,7 +143,7 @@ export async function incrementXP(clerkUserId, username, amount) {
     const response = await fetch(`${API_URL}/user-stats/xp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clerkUserId, username, amount }),
+      body: JSON.stringify({ action: 'xp', clerkUserId, username, amount }),
     });
 
     if (!response.ok) {

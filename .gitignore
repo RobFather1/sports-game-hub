@@ -27,3 +27,4 @@ yarn-error.log*
 # Claude Code folder (optional, but safer)
 .claude/
 LAMBDA index.mjs
+LAMBDA index old.txt
