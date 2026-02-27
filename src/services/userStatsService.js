@@ -6,6 +6,7 @@
  */
 
 const API_URL = process.env.REACT_APP_LAMBDA_API_URL;
+console.log('🔍 LAMBDA_API_URL value:', API_URL);
 
 // ============================================
 // XP RULES & LEVELS
