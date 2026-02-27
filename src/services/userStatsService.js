@@ -5,7 +5,7 @@
  * Makes fetch() calls to Lambda API endpoints.
  */
 
-const API_URL = process.env.REACT_APP_LAMBDA_API_URL;
+const API_URL = 'https://o4trgcru2c.execute-api.us-east-2.amazonaws.com/default/SmackTalkAPI';
 console.log('🔍 LAMBDA_API_URL value:', API_URL);
 
 // ============================================

@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = 'https://o4trgcru2c.execute-api.us-east-2.amazonaws.com/default/SmackTalkAPI';
 console.log('🔍 API_URL value:', API_URL)
 
 /**
