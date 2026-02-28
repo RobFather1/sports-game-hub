@@ -1,5 +1,34 @@
-## Built Entirely by AI
+# Built Entirely by AI
 Every line of code in this project was written by AI using Claude from Anthropic. Utilizing Claude chat for planning and troubleshooting the inevitable errors or bugs, Claude VS Code Extension and various Claude skill.md files were also heavily used. A human guided all the strategic decisions on designs and product options. This was/is a learning project that I very much enjoyed.  No hand-written code. No humans were injured in the making of this project. Enjoy, I'll Be Back!
+
+# Lessons Learned
+
+This project was a deep dive into AI-assisted development and full-stack architecture. Documenting these challenges helped solidify my understanding of the modern developer workflow.
+
+---
+
+### 1. AI Workflow: Managing Context Fragmentation
+One of the biggest hurdles was managing the interplay between the **Claude Chat AI** and the **Claude Code CLI**. Using two interfaces for the same project inherently creates a "split-brain" effect where neither has the full context of the other's changes.
+
+* **The Conflict:** I faced significant rework because the Chat interface was on a newer version of Sonnet, while the extension was trailing behind. I was hung-up on the "better" version.
+* **The Solution:** I learned to treat the CLI as the "hands-on" developer for file manipulation and the Chat UI as the "architect" for high-level strategy, ensuring I manually synced context when switching between them. When I had AWS settings or dev tools questions I used screenshots with Claude Chat AI to gain clarity. 
+
+### 2. Strategic Troubleshooting: The "Outside-In" Method
+Initially, I found myself in "logic loops" with AI when debugging—proposing the same failing solutions repeatedly. The breakthrough came when I stopped guessing and started tracing the data flow from the end-user backward. 
+
+**My Debugging Chain:**
+1.  **UI/UX:** Used Browser DevTools to inspect React state and network requests.
+2.  **Environment:** Verified `.env` variables in AWS Amplify (the "is it plugged in?" check).
+3.  **API Gateway:** Identified exactly where requests were being rejected.
+4.  **Lambda:** Isolated the function logic to ensure the payload was being passed correctly.
+5.  **DynamoDB:** Confirmed if the data actually reached the table.
+
+### 3. Key Observations & Growth
+* **Purposeful Deployment:** I deliberately chose **AWS Amplify** to abstract the publishing process. This allowed me to focus my energy on the interplay between the frontend and backend rather than wrestling with CI/CD pipelines.
+* **User-Driven Iteration:** I didn't originally plan to use a database. However, early feedback—*"I wish I could save my progress"*—pivoted the project toward **DynamoDB**. This taught me the "push and pull" of product management: balancing a technical roadmap with actual user needs. I've experienced this for years, but its been quite a while since I had to make changes myself.
+* **Refinement:** This project was a great experience in rapid prototyping. I plan to continue making minor updates as I encounter new edge cases.
+
+---
 
 # Smack Talk Central
 
