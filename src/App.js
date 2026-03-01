@@ -619,19 +619,24 @@ function App() {
               <span className="xp-display">{userStats.xp} XP</span>
             </div>
           )}
-          {isSignedIn ? (
-            <UserButton />
-          ) : (
-            <button
-              className="auth-button"
-              onClick={() => {
-                setAuthMode('signin');
-                setShowAuthModal(true);
-              }}
-            >
-              Sign In
-            </button>
-          )}
+{isSignedIn ? (
+  <UserButton />
+) : (
+  <div style={{ display: 'flex', gap: '8px' }}>
+    <button
+      className="auth-button"
+      onClick={() => { setAuthMode('signin'); setShowAuthModal(true); }}
+    >
+      Sign In
+    </button>
+    <button
+      className="auth-button"
+      onClick={() => { setAuthMode('signup'); setShowAuthModal(true); }}
+    >
+      Sign Up
+    </button>
+  </div>
+)}
 
           <button
             className={`polls-toggle-button ${showPollsSidebar ? 'active' : ''}`}
@@ -700,33 +705,34 @@ function App() {
         onSelectContent={handleSelectGif}
       />
 
-      {/* AUTHENTICATION MODAL */}
-      {showAuthModal && (
-        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="modal-close"
-              onClick={() => setShowAuthModal(false)}
-              aria-label="Close"
-            >
-              ×
-            </button>
-            {authMode === 'signin' ? (
-<SignIn
-  routing="virtual"
-  fallbackRedirectUrl="/"
-  forceRedirectUrl="/"
-  signUpUrl={undefined}
-  onSignUpClick={() => setAuthMode('signup')}
-/>
-) : (
-<SignUp
-  routing="virtual"
-  fallbackRedirectUrl="/"
-  forceRedirectUrl="/"
-  signInUrl={undefined}
-  onSignInClick={() => setAuthMode('signin')}
-/>
+{/* AUTHENTICATION MODAL */}
+{showAuthModal && (
+  <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
+    <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
+      <button
+        className="modal-close"
+        onClick={() => setShowAuthModal(false)}
+        aria-label="Close"
+      >
+        ×
+      </button>
+      {authMode === 'signin' ? (
+        <SignIn
+          routing="virtual"
+          fallbackRedirectUrl="/"
+          signUpUrl="/"
+          afterSignOutUrl="/"
+        />
+      ) : (
+        <SignUp
+          routing="virtual"
+          fallbackRedirectUrl="/"
+          signInUrl="/"
+          afterSignOutUrl="/"
+        />
+      )}
+    </div>
+  </div>
 )}
 
       {/* TOAST NOTIFICATIONS */}
