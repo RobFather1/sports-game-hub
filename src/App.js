@@ -712,24 +712,21 @@ function App() {
               ×
             </button>
             {authMode === 'signin' ? (
-  <SignIn
-    routing="virtual"
-    afterSignInUrl="/"
-    appearance={{
-      elements: {
-        footerActionLink: { cursor: 'pointer' }
-      }
-    }}
-    signUpUrl={undefined}
-    onSignUpClick={() => setAuthMode('signup')}
-  />
+<SignIn
+  routing="virtual"
+  fallbackRedirectUrl="/"
+  forceRedirectUrl="/"
+  signUpUrl={undefined}
+  onSignUpClick={() => setAuthMode('signup')}
+/>
 ) : (
-  <SignUp
-    routing="virtual"
-    afterSignUpUrl="/"
-    signInUrl={undefined}
-    onSignInClick={() => setAuthMode('signin')}
-  />
+<SignUp
+  routing="virtual"
+  fallbackRedirectUrl="/"
+  forceRedirectUrl="/"
+  signInUrl={undefined}
+  onSignInClick={() => setAuthMode('signin')}
+/>
 )}
 
       {/* TOAST NOTIFICATIONS */}
